@@ -49,9 +49,11 @@ const DealList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [salesRepFilter, setSalesRepFilter] = useState("");
   const [territoryFilter, setTerritoryFilter] = useState("");
+  const [stageFilter, setStageFilter] = useState("");
   const [sortField, setSortField] = useState<SortField>("created_date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [editingDeal, setEditingDeal] = useState<number | null>(null);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [salesReps, setSalesReps] = useState<string[]>([]);
 
   useEffect(() => {
@@ -97,7 +99,7 @@ const DealList: React.FC = () => {
     return deals;
   }, [pipelineData]);
 
-  // Get unique territories for filter dropdown
+  // Get unique territories and stages for filter dropdowns
   const territories = useMemo(() => {
     const territorySet = new Set<string>();
     allDeals.forEach(deal => {
@@ -106,6 +108,16 @@ const DealList: React.FC = () => {
       }
     });
     return Array.from(territorySet).sort();
+  }, [allDeals]);
+
+  const stages = useMemo(() => {
+    const stageSet = new Set<string>();
+    allDeals.forEach(deal => {
+      if (deal.stage) {
+        stageSet.add(deal.stage);
+      }
+    });
+    return Array.from(stageSet).sort();
   }, [allDeals]);
 
   // Filter and sort deals
@@ -127,7 +139,10 @@ const DealList: React.FC = () => {
         // Territory filter
         const matchesTerritory = !territoryFilter || deal.territory === territoryFilter;
         
-        return matchesSearch && matchesSalesRep && matchesTerritory;
+        // Stage filter
+        const matchesStage = !stageFilter || deal.stage === stageFilter;
+        
+        return matchesSearch && matchesSalesRep && matchesTerritory && matchesStage;
       }
     );
 
@@ -156,7 +171,7 @@ const DealList: React.FC = () => {
     });
 
     return filtered;
-  }, [allDeals, searchTerm, salesRepFilter, territoryFilter, sortField, sortDirection]);
+  }, [allDeals, searchTerm, salesRepFilter, territoryFilter, stageFilter, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -290,12 +305,24 @@ const DealList: React.FC = () => {
               ))}
             </select>
             
-            {(searchTerm || salesRepFilter || territoryFilter) && (
+            <select
+              value={stageFilter}
+              onChange={(e) => setStageFilter(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">All Stages</option>
+              {stages.map(stage => (
+                <option key={stage} value={stage}>{stage.replace('_', ' ')}</option>
+              ))}
+            </select>
+            
+            {(searchTerm || salesRepFilter || territoryFilter || stageFilter) && (
               <button
                 onClick={() => {
                   setSearchTerm("");
                   setSalesRepFilter("");
                   setTerritoryFilter("");
+                  setStageFilter("");
                 }}
                 className="px-3 py-2 text-sm text-gray-900 hover:text-gray-900 font-medium border border-gray-300 rounded-lg hover:bg-gray-50"
               >
@@ -310,22 +337,18 @@ const DealList: React.FC = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="w-full overflow-x-auto">
-        <table className="w-full bg-white border border-gray-200 rounded-lg" style={{tableLayout: "auto"}}>
+      {/* Compact Table - Key fields only */}
+      <div className="w-full">
+        <table className="w-full bg-white border border-gray-200 rounded-lg">
           <thead className="bg-gray-50">
             <tr>
               {[
                 { key: "deal_id", label: "Deal ID" },
                 { key: "company_name", label: "Company" },
-                { key: "contact_name", label: "Contact" },
                 { key: "stage", label: "Stage" },
-                { key: "transportation_mode", label: "Mode" },
                 { key: "value", label: "Value" },
-                { key: "probability", label: "Probability" },
                 { key: "sales_rep", label: "Sales Rep" },
                 { key: "territory", label: "Territory" },
-                { key: "expected_close_date", label: "Expected Close" },
               ].map(({ key, label }) => (
                 <th
                   key={key}
@@ -347,16 +370,20 @@ const DealList: React.FC = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredAndSortedDeals.map((deal) => (
               <tr key={deal.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {deal.deal_id}
+                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                  <button
+                    onClick={() => setSelectedDeal(deal)}
+                    className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                  >
+                    {deal.deal_id}
+                  </button>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {deal.company_name}
+                <td className="px-4 py-3 text-sm text-gray-900">
+                  <div className="max-w-xs truncate" title={deal.company_name}>
+                    {deal.company_name}
+                  </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {deal.contact_name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-4 py-3">
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStageColor(
                       deal.stage
@@ -365,25 +392,23 @@ const DealList: React.FC = () => {
                     {deal.stage.replace("_", " ")}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
-                  {deal.transportation_mode}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-3 text-sm text-gray-900 font-medium">
                   {formatCurrency(deal.value)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {deal.probability}%
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-3 text-sm text-gray-900">
                   {editingDeal === deal.id ? (
                     <select
                       defaultValue={deal.sales_rep?.name}
                       onChange={(e) => {
                         if (e.target.value) {
                           handleSalesRepUpdate(deal.id, e.target.value);
+                        } else {
+                          setEditingDeal(null);
                         }
                       }}
-                      className="border border-gray-300 rounded px-2 py-1 text-sm"
+                      onBlur={() => setEditingDeal(null)}
+                      autoFocus
+                      className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
                     >
                       <option value="">Select Sales Rep</option>
                       {salesReps.map((rep) => (
@@ -393,35 +418,29 @@ const DealList: React.FC = () => {
                       ))}
                     </select>
                   ) : (
-                    <div className="flex items-center space-x-2">
-                      <span>{deal.sales_rep?.name || 'Unassigned'}</span>
+                    <div className="flex flex-col space-y-1">
+                      <span className="truncate" title={deal.sales_rep?.name || 'Unassigned'}>
+                        {deal.sales_rep?.name || 'Unassigned'}
+                      </span>
                       {deal.stage !== 'closed_won' && deal.stage !== 'closed_lost' && (
                         <button
                           onClick={() => setEditingDeal(deal.id)}
-                          className="text-blue-600 hover:text-blue-800 text-xs"
+                          className="text-blue-600 hover:text-blue-800 text-xs self-start"
                         >
                           Reassign
                         </button>
                       )}
-                      {(deal.stage === 'closed_won' || deal.stage === 'closed_lost') && (
-                        <span className="text-gray-400 text-xs">
-                          (Closed - cannot reassign)
-                        </span>
-                      )}
                     </div>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
+                <td className="px-4 py-3 text-sm text-gray-900">
+                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${
                     deal.territory 
                       ? 'bg-blue-100 text-blue-800' 
                       : 'bg-gray-100 text-gray-600'
                   }`}>
                     {deal.territory || 'Unassigned'}
                   </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatDate(deal.expected_close_date)}
                 </td>
               </tr>
             ))}
@@ -432,6 +451,136 @@ const DealList: React.FC = () => {
       {filteredAndSortedDeals.length === 0 && (
         <div className="text-center py-8 text-gray-500">
           No deals found matching your search criteria.
+        </div>
+      )}
+
+      {/* Deal Detail Modal */}
+      {selectedDeal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setSelectedDeal(null)}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Deal Details - {selectedDeal.deal_id}
+              </h3>
+              <button
+                onClick={() => setSelectedDeal(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-6 space-y-6">
+              <div className="grid grid-cols-3 gap-6">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Company</label>
+                  <p className="text-gray-900">{selectedDeal.company_name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Contact</label>
+                  <p className="text-gray-900">{selectedDeal.contact_name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Stage</label>
+                  <p>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStageColor(selectedDeal.stage)}`}>
+                      {selectedDeal.stage.replace("_", " ")}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Value</label>
+                  <p className="text-gray-900 font-medium">{formatCurrency(selectedDeal.value)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Probability</label>
+                  <p className="text-gray-900">{selectedDeal.probability}%</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Transportation Mode</label>
+                  <p className="text-gray-900 capitalize">{selectedDeal.transportation_mode}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Sales Rep</label>
+                  {editingDeal === selectedDeal.id ? (
+                    <select
+                      defaultValue={selectedDeal.sales_rep?.name}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleSalesRepUpdate(selectedDeal.id, e.target.value);
+                        } else {
+                          setEditingDeal(null);
+                        }
+                      }}
+                      onBlur={() => setEditingDeal(null)}
+                      autoFocus
+                      className="border border-gray-300 rounded px-2 py-1 text-sm w-full mt-1"
+                    >
+                      <option value="">Select Sales Rep</option>
+                      {salesReps.map((rep) => (
+                        <option key={rep} value={rep}>
+                          {rep}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="flex items-center space-x-2 mt-1">
+                      <span className="text-gray-900">{selectedDeal.sales_rep?.name || 'Unassigned'}</span>
+                      {selectedDeal.stage !== 'closed_won' && selectedDeal.stage !== 'closed_lost' && (
+                        <button
+                          onClick={() => setEditingDeal(selectedDeal.id)}
+                          className="text-blue-600 hover:text-blue-800 text-xs"
+                        >
+                          Change
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Territory</label>
+                  <p>
+                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                      selectedDeal.territory 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {selectedDeal.territory || 'Unassigned'}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Origin City</label>
+                  <p className="text-gray-900">{selectedDeal.origin_city}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Destination City</label>
+                  <p className="text-gray-900">{selectedDeal.destination_city}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Expected Close</label>
+                  <p className="text-gray-900">{formatDate(selectedDeal.expected_close_date)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Created Date</label>
+                  <p className="text-gray-900">{formatDate(selectedDeal.created_date)}</p>
+                </div>
+              </div>
+              {selectedDeal.cargo_type && (
+                <div className="border-t pt-4">
+                  <label className="text-sm font-medium text-gray-500">Cargo Type</label>
+                  <p className="text-gray-900">{selectedDeal.cargo_type}</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

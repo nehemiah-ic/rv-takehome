@@ -16,13 +16,13 @@ describe("/api/territories", () => {
 
   describe("GET", () => {
     it("should return territory analytics with correct grouping", async () => {
-      // Mock deals data
+      // Mock deals data with proper sales_rep entity structure
       const mockDeals: Partial<Deal>[] = [
         {
           id: 1,
           deal_id: "RV-001",
           territory: "West Coast",
-          sales_rep: "Mike Rodriguez",
+          sales_rep: { id: 1, name: "Mike Rodriguez", email: "mike@test.com", territory: "West", active: true },
           value: 45000,
           probability: 70,
           stage: "proposal",
@@ -31,7 +31,7 @@ describe("/api/territories", () => {
           id: 2,
           deal_id: "RV-002",
           territory: "West Coast",
-          sales_rep: "Mike Rodriguez",
+          sales_rep: { id: 1, name: "Mike Rodriguez", email: "mike@test.com", territory: "West", active: true },
           value: 25000,
           probability: 60,
           stage: "negotiation",
@@ -40,7 +40,7 @@ describe("/api/territories", () => {
           id: 3,
           deal_id: "RV-003",
           territory: "East Coast",
-          sales_rep: "Jennifer Walsh",
+          sales_rep: { id: 2, name: "Jennifer Walsh", email: "jennifer@test.com", territory: "East", active: true },
           value: 75000,
           probability: 30,
           stage: "prospect",
@@ -49,7 +49,7 @@ describe("/api/territories", () => {
           id: 4,
           deal_id: "RV-004",
           territory: undefined, // Unassigned
-          sales_rep: "Tom Wilson",
+          sales_rep: { id: 3, name: "Tom Wilson", email: "tom@test.com", territory: "Central", active: true },
           value: 28000,
           probability: 60,
           stage: "qualified",

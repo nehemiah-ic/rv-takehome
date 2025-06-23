@@ -6,7 +6,9 @@ export async function GET() {
   try {
     const dataSource = await initializeDataSource();
     const dealRepository = dataSource.getRepository(Deal);
-    const deals = await dealRepository.find();
+    const deals = await dealRepository.find({
+      relations: ['sales_rep']
+    });
 
     // Group deals by territory
     const territoryAnalytics = deals.reduce((accumulator, deal) => {
@@ -25,7 +27,9 @@ export async function GET() {
 
       accumulator[territory].totalDeals += 1;
       accumulator[territory].totalValue += Number(deal.value);
-      accumulator[territory].salesReps.add(deal.sales_rep);
+      if (deal.sales_rep?.name) {
+        accumulator[territory].salesReps.add(deal.sales_rep.name);
+      }
 
       // Track deals by stage within territory
       if (!accumulator[territory].dealsByStage[deal.stage]) {

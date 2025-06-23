@@ -23,6 +23,7 @@ const TerritoryDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<keyof TerritoryData>("totalValue");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [selectedTerritory, setSelectedTerritory] = useState<TerritoryData | null>(null);
 
   useEffect(() => {
     fetchTerritoryData();
@@ -171,7 +172,12 @@ const TerritoryDashboard: React.FC = () => {
               {sortedTerritories?.map((territory) => (
                 <tr key={territory.territory} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-2 py-2 font-medium text-gray-900">
-                    {territory.territory}
+                    <button
+                      onClick={() => setSelectedTerritory(territory)}
+                      className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                    >
+                      {territory.territory}
+                    </button>
                   </td>
                   <td className="px-2 py-2 text-gray-600">
                     {territory.totalDeals}
@@ -194,6 +200,104 @@ const TerritoryDashboard: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Territory Detail Modal */}
+      {selectedTerritory && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setSelectedTerritory(null)}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Territory Details - {selectedTerritory.territory}
+              </h3>
+              <button
+                onClick={() => setSelectedTerritory(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-6 space-y-6">
+              {/* Overview Metrics */}
+              <div className="grid grid-cols-4 gap-6">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Total Deals</label>
+                  <p className="text-2xl font-bold text-gray-900">{selectedTerritory.totalDeals}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Pipeline Value</label>
+                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(selectedTerritory.totalValue)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Avg. Probability</label>
+                  <p className="text-2xl font-bold text-gray-900">{selectedTerritory.avgProbability.toFixed(1)}%</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Sales Reps</label>
+                  <p className="text-2xl font-bold text-gray-900">{selectedTerritory.repCount}</p>
+                </div>
+              </div>
+
+              {/* Deal Distribution by Stage */}
+              <div className="border-t pt-6">
+                <h4 className="text-lg font-medium text-gray-900 mb-4">Deal Distribution by Stage</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {Object.entries(selectedTerritory.dealsByStage).map(([stage, count]) => (
+                    <div key={stage} className="bg-gray-50 rounded-lg p-4">
+                      <div className="text-sm font-medium text-gray-500 capitalize">
+                        {stage.replace('_', ' ')}
+                      </div>
+                      <div className="text-xl font-bold text-gray-900">{count}</div>
+                      <div className="text-sm text-gray-600">
+                        {((count / selectedTerritory.totalDeals) * 100).toFixed(1)}%
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sales Representatives */}
+              <div className="border-t pt-6">
+                <h4 className="text-lg font-medium text-gray-900 mb-4">Sales Representatives</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {selectedTerritory.salesReps.map((rep, index) => (
+                    <div key={index} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                      <div className="font-medium text-blue-900">{rep}</div>
+                      <div className="text-sm text-blue-700">Active Rep</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Performance Insights */}
+              <div className="border-t pt-6">
+                <h4 className="text-lg font-medium text-gray-900 mb-4">Performance Insights</h4>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                    <div className="text-sm font-medium text-green-800">Average Deal Value</div>
+                    <div className="text-xl font-bold text-green-900">
+                      {formatCurrency(selectedTerritory.totalValue / selectedTerritory.totalDeals)}
+                    </div>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                    <div className="text-sm font-medium text-purple-800">Deals per Rep</div>
+                    <div className="text-xl font-bold text-purple-900">
+                      {(selectedTerritory.totalDeals / selectedTerritory.repCount).toFixed(1)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

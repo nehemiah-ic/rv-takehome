@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -82,6 +82,8 @@ const SortableCard: React.FC<SortableCardProps> = ({ id, title, children, defaul
 };
 
 const PipelineDashboard: React.FC = () => {
+  const [pipelineData, setPipelineData] = useState<any>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -89,7 +91,24 @@ const PipelineDashboard: React.FC = () => {
     })
   );
 
-  const [cards, setCards] = useState<CardItem[]>([
+  useEffect(() => {
+    const fetchPipelineData = async () => {
+      try {
+        const response = await fetch('/api/deals');
+        if (response.ok) {
+          const data = await response.json();
+          setPipelineData(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch pipeline data:', error);
+      }
+    };
+    fetchPipelineData();
+  }, []);
+
+  const totalDeals = pipelineData?.totalDeals || 0;
+
+  const cards: CardItem[] = [
     {
       id: "territory",
       title: "Territory Summary",
@@ -98,7 +117,7 @@ const PipelineDashboard: React.FC = () => {
     },
     {
       id: "deals",
-      title: "Deal List",
+      title: `Deal List (${totalDeals})`,
       component: <DealList />,
       defaultExpanded: false,
     },
@@ -120,20 +139,24 @@ const PipelineDashboard: React.FC = () => {
       component: <AuditTrail showAllDeals={true} />,
       defaultExpanded: false,
     },
-  ]);
+  ];
+
+  const [cardOrder, setCardOrder] = useState(cards.map(card => card.id));
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      setCards((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over?.id);
+      setCardOrder((items) => {
+        const oldIndex = items.findIndex((item) => item === active.id);
+        const newIndex = items.findIndex((item) => item === over?.id);
 
         return arrayMove(items, oldIndex, newIndex);
       });
     }
   }
+
+  const orderedCards = cardOrder.map(id => cards.find(card => card.id === id)!).filter(Boolean);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 overflow-x-hidden">
@@ -170,9 +193,9 @@ const PipelineDashboard: React.FC = () => {
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext items={cards} strategy={verticalListSortingStrategy}>
+            <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
               <div className="space-y-4">
-                {cards.map((card) => (
+                {orderedCards.map((card) => (
                   <SortableCard
                     key={card.id}
                     id={card.id}
