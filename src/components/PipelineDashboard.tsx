@@ -1,7 +1,9 @@
 import React from "react";
+import AuditTrail from "./AuditTrail";
 import DealList from "./DealList";
 import PerformanceMetrics from "./PerformanceMetrics";
 import PipelineFunnel from "./PipelineFunnel";
+import RepWorkloadDashboard from "./RepWorkloadDashboard";
 import TerritoryDashboard from "./TerritoryDashboard";
 
 const PipelineDashboard: React.FC = () => {
@@ -41,6 +43,26 @@ const PipelineDashboard: React.FC = () => {
             </h2>
             <div className="overflow-hidden">
               <TerritoryDashboard />
+            </div>
+          </div>
+
+          {/* Rep Workload Section */}
+          <div className="bg-white rounded-lg shadow p-4 overflow-hidden">
+            <h2 className="text-lg font-semibold text-gray-800 mb-3">
+              Sales Rep Workload Analysis
+            </h2>
+            <div className="overflow-hidden">
+              <RepWorkloadDashboard />
+            </div>
+          </div>
+
+          {/* Audit Trail Section */}
+          <div className="bg-white rounded-lg shadow p-4 overflow-hidden">
+            <h2 className="text-lg font-semibold text-gray-800 mb-3">
+              Recent Changes & Audit Trail
+            </h2>
+            <div className="overflow-hidden">
+              <AuditTrail showAllDeals={true} />
             </div>
           </div>
 

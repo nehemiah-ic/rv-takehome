@@ -11,12 +11,9 @@ export async function GET() {
     // Get unique sales reps from existing deals
     const salesReps = [...new Set(deals.map(deal => deal.sales_rep))].sort();
 
-    // Add some additional reps for assignment flexibility
+    // Add one additional rep for assignment flexibility
     const additionalReps = [
-      "Sarah Johnson",
-      "Kevin Chen", 
-      "Emily Davis",
-      "Marcus Thompson"
+      "Sarah Johnson"
     ];
 
     const allReps = [...new Set([...salesReps, ...additionalReps])].sort();
