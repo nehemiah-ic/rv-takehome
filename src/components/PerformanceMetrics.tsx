@@ -1,6 +1,16 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 
+interface SalesRep {
+  id: number;
+  name: string;
+  email: string;
+  territory: string;
+  active: boolean;
+  created_date: string;
+  updated_date: string;
+}
+
 interface Deal {
   id: number;
   deal_id: string;
@@ -13,7 +23,8 @@ interface Deal {
   created_date: string;
   updated_date: string;
   expected_close_date: string;
-  sales_rep: string;
+  sales_rep_id: number;
+  sales_rep: SalesRep;
   origin_city: string;
   destination_city: string;
   cargo_type?: string;
@@ -93,11 +104,14 @@ const PerformanceMetrics: React.FC = () => {
 
     // Find top performing sales rep
     const dealsBySalesRep = allDeals.reduce((acc, deal) => {
-      if (!acc[deal.sales_rep]) {
-        acc[deal.sales_rep] = { count: 0, value: 0 };
+      const repName = deal.sales_rep?.name;
+      if (repName) {
+        if (!acc[repName]) {
+          acc[repName] = { count: 0, value: 0 };
+        }
+        acc[repName].count += 1;
+        acc[repName].value += deal.value;
       }
-      acc[deal.sales_rep].count += 1;
-      acc[deal.sales_rep].value += deal.value;
       return acc;
     }, {} as Record<string, { count: number; value: number }>);
 

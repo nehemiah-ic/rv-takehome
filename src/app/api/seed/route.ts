@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { initializeDataSource } from "../../../data-source";
 import { Deal } from "../../../lib/entities/deals/Deal";
 import { SalesRep } from "../../../lib/entities/salesRep/SalesRep";
+import { AuditLog } from "../../../lib/entities/auditLog/AuditLog";
 
 // Function to auto-assign territory based on origin city
 function assignTerritory(originCity: string): string {
@@ -222,11 +223,13 @@ export async function POST() {
     const dataSource = await initializeDataSource();
     const dealRepository = dataSource.getRepository(Deal);
     const salesRepRepository = dataSource.getRepository(SalesRep);
+    const auditLogRepository = dataSource.getRepository(AuditLog);
 
     // Clear existing data
+    await auditLogRepository.clear();
     await dealRepository.clear();
     await salesRepRepository.clear();
-    console.log("Cleared existing deals and sales reps");
+    console.log("Cleared existing audit logs, deals and sales reps");
 
     // Insert sales reps first and create a lookup map
     const salesRepMap = new Map<string, number>();

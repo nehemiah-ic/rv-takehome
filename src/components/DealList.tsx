@@ -1,6 +1,16 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 
+interface SalesRep {
+  id: number;
+  name: string;
+  email: string;
+  territory: string;
+  active: boolean;
+  created_date: string;
+  updated_date: string;
+}
+
 interface Deal {
   id: number;
   deal_id: string;
@@ -13,7 +23,8 @@ interface Deal {
   created_date: string;
   updated_date: string;
   expected_close_date: string;
-  sales_rep: string;
+  sales_rep_id: number;
+  sales_rep: SalesRep;
   origin_city: string;
   destination_city: string;
   cargo_type?: string;
@@ -91,7 +102,7 @@ const DealList: React.FC = () => {
         deal.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.deal_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deal.sales_rep.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        deal.sales_rep?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.stage.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.transportation_mode
           .toLowerCase()
@@ -304,7 +315,7 @@ const DealList: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {editingDeal === deal.id ? (
                     <select
-                      defaultValue={deal.sales_rep}
+                      defaultValue={deal.sales_rep?.name}
                       onChange={(e) => {
                         if (e.target.value) {
                           handleSalesRepUpdate(deal.id, e.target.value);
@@ -321,7 +332,7 @@ const DealList: React.FC = () => {
                     </select>
                   ) : (
                     <div className="flex items-center space-x-2">
-                      <span>{deal.sales_rep}</span>
+                      <span>{deal.sales_rep?.name || 'Unassigned'}</span>
                       <button
                         onClick={() => setEditingDeal(deal.id)}
                         className="text-blue-600 hover:text-blue-800 text-xs"
