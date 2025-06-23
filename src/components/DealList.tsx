@@ -271,7 +271,7 @@ const DealList: React.FC = () => {
             <select
               value={salesRepFilter}
               onChange={(e) => setSalesRepFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">All Sales Reps</option>
               {salesReps.map(rep => (
@@ -282,7 +282,7 @@ const DealList: React.FC = () => {
             <select
               value={territoryFilter}
               onChange={(e) => setTerritoryFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">All Territories</option>
               {territories.map(territory => (
@@ -297,7 +297,7 @@ const DealList: React.FC = () => {
                   setSalesRepFilter("");
                   setTerritoryFilter("");
                 }}
-                className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-3 py-2 text-sm text-gray-900 hover:text-gray-900 font-medium border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 Clear
               </button>
@@ -305,7 +305,7 @@ const DealList: React.FC = () => {
           </div>
         </div>
         
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-gray-900 font-medium">
           Showing {filteredAndSortedDeals.length} of {allDeals.length} deals
         </div>
       </div>
