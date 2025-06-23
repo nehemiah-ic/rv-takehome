@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { In, Not } from "typeorm";
 import { initializeDataSource } from "../../../data-source";
 import { Deal } from "../../../lib/entities/deals/Deal";
 import { SalesRep } from "../../../lib/entities/salesRep/SalesRep";
@@ -28,9 +29,13 @@ export async function GET() {
     const salesRepRepository = dataSource.getRepository(SalesRep);
     
     // Fetch deals and sales reps in parallel
+    // Only include active deals (exclude closed_won and closed_lost)
     const [deals, salesReps] = await Promise.all([
       dealRepository.find({
         relations: ['sales_rep'],
+        where: {
+          stage: Not(In(['closed_won', 'closed_lost']))
+        }
       }),
       salesRepRepository.find({
         where: { active: true },

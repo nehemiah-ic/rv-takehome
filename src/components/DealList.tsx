@@ -333,12 +333,19 @@ const DealList: React.FC = () => {
                   ) : (
                     <div className="flex items-center space-x-2">
                       <span>{deal.sales_rep?.name || 'Unassigned'}</span>
-                      <button
-                        onClick={() => setEditingDeal(deal.id)}
-                        className="text-blue-600 hover:text-blue-800 text-xs"
-                      >
-                        Reassign
-                      </button>
+                      {deal.stage !== 'closed_won' && deal.stage !== 'closed_lost' && (
+                        <button
+                          onClick={() => setEditingDeal(deal.id)}
+                          className="text-blue-600 hover:text-blue-800 text-xs"
+                        >
+                          Reassign
+                        </button>
+                      )}
+                      {(deal.stage === 'closed_won' || deal.stage === 'closed_lost') && (
+                        <span className="text-gray-400 text-xs">
+                          (Closed - cannot reassign)
+                        </span>
+                      )}
                     </div>
                   )}
                 </td>

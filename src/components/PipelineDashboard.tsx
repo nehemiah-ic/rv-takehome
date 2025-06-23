@@ -97,6 +97,12 @@ const PipelineDashboard: React.FC = () => {
       defaultExpanded: false,
     },
     {
+      id: "deals",
+      title: "Deal List",
+      component: <DealList />,
+      defaultExpanded: false,
+    },
+    {
       id: "workload",
       title: "Sales Rep Workload Analysis",
       component: <RepWorkloadDashboard />,
@@ -106,12 +112,6 @@ const PipelineDashboard: React.FC = () => {
       id: "bulk",
       title: "Bulk Sales Rep Reassignment",
       component: <BulkReorganizationTool />,
-      defaultExpanded: false,
-    },
-    {
-      id: "deals",
-      title: "Deal List",
-      component: <DealList />,
       defaultExpanded: false,
     },
     {

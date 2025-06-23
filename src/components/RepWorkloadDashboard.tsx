@@ -213,8 +213,23 @@ const RepWorkloadDashboard: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Deal Count
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Pipeline Value
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider relative">
+                  <div className="flex items-center space-x-1">
+                    <span>Pipeline Value</span>
+                    <div className="group">
+                      <svg className="w-4 h-4 text-gray-400 cursor-help hover:text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                      <div className="invisible group-hover:visible absolute top-full left-0 mt-2 w-64 p-3 bg-black text-white text-xs rounded-lg shadow-xl z-[9999] border border-gray-700">
+                        <div className="space-y-1">
+                          <div className="font-semibold text-blue-300">Pipeline Value:</div>
+                          <div>Total value of <span className="text-green-300 font-medium">active deals only</span></div>
+                          <div>Excludes closed won and closed lost deals</div>
+                          <div>Represents current workload in progress</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Avg Deal Size
