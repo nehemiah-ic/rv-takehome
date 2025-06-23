@@ -47,6 +47,8 @@ const DealList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [salesRepFilter, setSalesRepFilter] = useState("");
+  const [territoryFilter, setTerritoryFilter] = useState("");
   const [sortField, setSortField] = useState<SortField>("created_date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [editingDeal, setEditingDeal] = useState<number | null>(null);
@@ -95,18 +97,38 @@ const DealList: React.FC = () => {
     return deals;
   }, [pipelineData]);
 
+  // Get unique territories for filter dropdown
+  const territories = useMemo(() => {
+    const territorySet = new Set<string>();
+    allDeals.forEach(deal => {
+      if (deal.territory) {
+        territorySet.add(deal.territory);
+      }
+    });
+    return Array.from(territorySet).sort();
+  }, [allDeals]);
+
   // Filter and sort deals
   const filteredAndSortedDeals = useMemo(() => {
     const filtered = allDeals.filter(
-      (deal) =>
-        deal.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deal.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deal.deal_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deal.sales_rep?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deal.stage.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        deal.transportation_mode
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
+      (deal) => {
+        // Search term filter
+        const matchesSearch = !searchTerm || 
+          deal.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          deal.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          deal.deal_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          deal.sales_rep?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          deal.stage.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          deal.transportation_mode.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        // Sales rep filter
+        const matchesSalesRep = !salesRepFilter || deal.sales_rep?.name === salesRepFilter;
+        
+        // Territory filter
+        const matchesTerritory = !territoryFilter || deal.territory === territoryFilter;
+        
+        return matchesSearch && matchesSalesRep && matchesTerritory;
+      }
     );
 
     filtered.sort((a, b) => {
@@ -134,7 +156,7 @@ const DealList: React.FC = () => {
     });
 
     return filtered;
-  }, [allDeals, searchTerm, sortField, sortDirection]);
+  }, [allDeals, searchTerm, salesRepFilter, territoryFilter, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -217,33 +239,73 @@ const DealList: React.FC = () => {
 
   return (
     <div className="w-full space-y-4">
-      {/* Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <div className="relative flex-1 max-w-md">
-          <input
-            type="text"
-            placeholder="Search deals..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+      {/* Search and Filter Bar */}
+      <div className="space-y-4">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="relative flex-1 max-w-md">
+            <input
+              type="text"
+              placeholder="Search deals..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg
+                className="h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              value={salesRepFilter}
+              onChange={(e) => setSalesRepFilter(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+              <option value="">All Sales Reps</option>
+              {salesReps.map(rep => (
+                <option key={rep} value={rep}>{rep}</option>
+              ))}
+            </select>
+            
+            <select
+              value={territoryFilter}
+              onChange={(e) => setTerritoryFilter(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">All Territories</option>
+              {territories.map(territory => (
+                <option key={territory} value={territory}>{territory}</option>
+              ))}
+            </select>
+            
+            {(searchTerm || salesRepFilter || territoryFilter) && (
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setSalesRepFilter("");
+                  setTerritoryFilter("");
+                }}
+                className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Clear
+              </button>
+            )}
           </div>
         </div>
-        <div className="text-sm text-gray-600">
+        
+        <div className="text-sm text-gray-700">
           Showing {filteredAndSortedDeals.length} of {allDeals.length} deals
         </div>
       </div>

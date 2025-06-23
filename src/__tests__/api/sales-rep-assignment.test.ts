@@ -25,16 +25,22 @@ describe("/api/deals/[id]/sales-rep", () => {
       const mockDeal: Partial<Deal> = {
         id: 1,
         deal_id: "RV-001",
-        sales_rep_name: "Old Rep",
+        sales_rep_id: 1,
+        sales_rep: { id: 1, name: "Old Rep", email: "old@test.com", territory: "West", active: true },
         territory: "West Coast",
         updated_date: "2023-01-01T00:00:00.000Z",
       };
 
+      const newSalesRep = { id: 2, name: "Jennifer Walsh", email: "jennifer@test.com", territory: "West", active: true };
+      
+      mockSalesRepRepository.findOne.mockResolvedValue(newSalesRep);
+      
       const mockDealRepository = {
         findOne: jest.fn().mockResolvedValue(mockDeal),
         save: jest.fn().mockResolvedValue({
           ...mockDeal,
-          sales_rep_name: "Jennifer Walsh",
+          sales_rep_id: 2,
+          sales_rep: newSalesRep,
         }),
       };
       const mockAuditRepository = {
@@ -54,7 +60,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const request = new NextRequest("http://localhost:3000/api/deals/1/sales-rep", {
         method: "PATCH",
         body: JSON.stringify({
-          sales_rep_name: "Jennifer Walsh",
+          sales_rep: "Jennifer Walsh",
         }),
       });
 
@@ -67,7 +73,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       expect(data.territory).toBe("West Coast");
       expect(mockDealRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          sales_rep_name: "Jennifer Walsh",
+          sales_rep_id: 2,
         })
       );
       expect(mockAuditRepository.create).toHaveBeenCalled();
@@ -78,7 +84,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const request = new NextRequest("http://localhost:3000/api/deals/invalid/sales-rep", {
         method: "PATCH",
         body: JSON.stringify({
-          sales_rep_name: "Jennifer Walsh",
+          sales_rep: "Jennifer Walsh",
         }),
       });
 
@@ -101,6 +107,7 @@ describe("/api/deals/[id]/sales-rep", () => {
         getRepository: jest.fn().mockImplementation((entity) => {
           if (entity.name === 'Deal') return mockDealRepository;
           if (entity.name === 'AuditLog') return mockAuditRepository;
+          if (entity.name === 'SalesRep') return mockSalesRepRepository;
           return mockDealRepository;
         }),
       };
@@ -109,7 +116,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const request = new NextRequest("http://localhost:3000/api/deals/999/sales-rep", {
         method: "PATCH",
         body: JSON.stringify({
-          sales_rep_name: "Jennifer Walsh",
+          sales_rep: "Jennifer Walsh",
         }),
       });
 
@@ -161,6 +168,7 @@ describe("/api/deals/[id]/sales-rep", () => {
         getRepository: jest.fn().mockImplementation((entity) => {
           if (entity.name === 'Deal') return mockDealRepository;
           if (entity.name === 'AuditLog') return mockAuditRepository;
+          if (entity.name === 'SalesRep') return mockSalesRepRepository;
           return mockDealRepository;
         }),
       };
@@ -169,7 +177,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const request = new NextRequest("http://localhost:3000/api/deals/1/sales-rep", {
         method: "PATCH",
         body: JSON.stringify({
-          sales_rep_name: "Jennifer Walsh",
+          sales_rep: "Jennifer Walsh",
         }),
       });
 
@@ -184,11 +192,16 @@ describe("/api/deals/[id]/sales-rep", () => {
       const mockDeal: Partial<Deal> = {
         id: 1,
         deal_id: "RV-001",
-        sales_rep_name: "Old Rep",
+        sales_rep_id: 1,
+        sales_rep: { id: 1, name: "Old Rep", email: "old@test.com", territory: "West", active: true },
         territory: "West Coast",
         updated_date: "2023-01-01T00:00:00.000Z",
       };
 
+      const newSalesRep = { id: 3, name: "New Rep", email: "new@test.com", territory: "Central", active: true };
+      
+      mockSalesRepRepository.findOne.mockResolvedValue(newSalesRep);
+      
       const mockDealRepository = {
         findOne: jest.fn().mockResolvedValue(mockDeal),
         save: jest.fn().mockImplementation((deal) => Promise.resolve(deal)),
@@ -201,6 +214,7 @@ describe("/api/deals/[id]/sales-rep", () => {
         getRepository: jest.fn().mockImplementation((entity) => {
           if (entity.name === 'Deal') return mockDealRepository;
           if (entity.name === 'AuditLog') return mockAuditRepository;
+          if (entity.name === 'SalesRep') return mockSalesRepRepository;
           return mockDealRepository;
         }),
       };
@@ -209,7 +223,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const request = new NextRequest("http://localhost:3000/api/deals/1/sales-rep", {
         method: "PATCH",
         body: JSON.stringify({
-          sales_rep_name: "New Rep",
+          sales_rep: "New Rep",
         }),
       });
 
@@ -217,7 +231,7 @@ describe("/api/deals/[id]/sales-rep", () => {
 
       expect(mockDealRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          sales_rep_name: "New Rep",
+          sales_rep_id: 3,
           updated_date: expect.any(String),
         })
       );
