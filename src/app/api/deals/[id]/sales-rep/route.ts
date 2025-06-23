@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { initializeDataSource } from "../../../../../data-source";
 import { Deal } from "../../../../../lib/entities/deals/Deal";
 import { AuditLog } from "../../../../../lib/entities/auditLog/AuditLog";
+import { SalesRep } from "../../../../../lib/entities/salesRep/SalesRep";
 import { z } from "zod";
 
 const SalesRepUpdateSchema = z.object({
@@ -38,8 +39,12 @@ export async function PATCH(
     const dataSource = await initializeDataSource();
     const dealRepository = dataSource.getRepository(Deal);
     const auditRepository = dataSource.getRepository(AuditLog);
+    const salesRepRepository = dataSource.getRepository(SalesRep);
 
-    const deal = await dealRepository.findOne({ where: { id: dealId } });
+    const deal = await dealRepository.findOne({ 
+      where: { id: dealId },
+      relations: ['sales_rep']
+    });
     if (!deal) {
       return NextResponse.json(
         { error: "Deal not found" },
@@ -47,11 +52,23 @@ export async function PATCH(
       );
     }
 
+    // Find the new sales rep
+    const newSalesRep = await salesRepRepository.findOne({
+      where: { name: sales_rep }
+    });
+    if (!newSalesRep) {
+      return NextResponse.json(
+        { error: "Sales rep not found" },
+        { status: 404 }
+      );
+    }
+
     // Store old value for audit trail
-    const oldSalesRep = deal.sales_rep;
+    const oldSalesRep = deal.sales_rep?.name;
 
     // Update sales rep
-    deal.sales_rep = sales_rep;
+    deal.sales_rep_id = newSalesRep.id;
+    deal.sales_rep = newSalesRep;
     deal.updated_date = new Date().toISOString();
 
     // Create audit log entry
@@ -60,7 +77,7 @@ export async function PATCH(
       dealIdentifier: deal.deal_id,
       fieldChanged: 'sales_rep',
       oldValue: oldSalesRep,
-      newValue: sales_rep,
+      newValue: newSalesRep.name,
       changedBy: changed_by,
       reason: reason || 'Sales rep reassignment',
       changeType: 'manual',

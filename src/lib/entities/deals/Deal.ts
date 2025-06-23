@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
+import { SalesRep } from "../salesRep/SalesRep";
 
 @Entity()
 export class Deal {
@@ -36,7 +37,11 @@ export class Deal {
   expected_close_date!: string;
 
   @Column()
-  sales_rep!: string;
+  sales_rep_id!: number;
+
+  @ManyToOne(() => SalesRep)
+  @JoinColumn({ name: 'sales_rep_id' })
+  sales_rep!: SalesRep;
 
   @Column()
   origin_city!: string;

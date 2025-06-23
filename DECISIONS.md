@@ -1,3 +1,136 @@
+# Database Normalization & UI Polish - What I Built & Why (PR #4)
+
+## The Gist
+
+Refactored the sales rep system into proper database normalization with foreign key relationships, while adding comprehensive UI improvements including drag-and-drop dashboard organization, enhanced filtering, and improved user experience across all components.
+
+## What I Built
+
+**Database Normalization:**
+- Created SalesRep entity with proper TypeORM decorators and relationships
+- Updated Deal entity to use `sales_rep_id` foreign key instead of redundant name storage
+- Migrated all APIs to use proper entity relationships with `relations: ['sales_rep']`
+- Fixed seed file to create clean entity structure without data redundancy
+- Updated all test data to match new SalesRep entity format
+
+**Enhanced Dashboard Experience:**
+- Implemented drag-and-drop card reordering using @dnd-kit library so the User can arrange what fits best for their needs
+- Made all dashboard cards collapsible with persistent state because the page was getting long
+- Added territory and sales rep filtering to Deal List card
+- Improved font readability with darker text colors throughout
+- Added tooltips explaining Pipeline Value calculations for active deals only
+
+**Business Logic Improvements:**
+- Updated utilization calculations to exclude closed deals (closed_won/closed_lost)
+- Prevented reassigning closed deals in both Deal List and Bulk Reassignment
+- Matched stage colors between Deal List and Bulk Reassignment components
+- Added clear filter buttons and improved search/filter UX
+
+**API Updates:**
+- Fixed sales rep assignment API to work with new SalesRep entity structure
+- Updated workload analytics to filter out closed deals from calculations
+- Enhanced all repository queries to use proper FK relationships
+- Added proper SalesRep repository mocking in all test files
+
+## Scope Cuts (Hour 4 Polish!)
+
+### Geographic Intelligence → Focus on Core Features
+**Cut**: Advanced geographic territory assignment and ZIP code parsing  
+**Built**: Solid foundation with existing city-based territory mapping  
+**Why**: Database normalization and UI polish provides more immediate value than complex geo features.
+
+### Advanced Bulk Operations → Enhanced Individual Assignment  
+**Cut**: Complex bulk territory reshuffling with map visualizations  
+**Built**: Improved filtering and individual deal assignment experience  
+**Why**: Most territory management happens at the individual deal level. Polish there provides daily value.
+
+### Complex Analytics → Clean Data Foundation
+**Cut**: Advanced forecasting and trend analysis  
+**Built**: Proper entity relationships and accurate utilization calculations  
+**Why**: Clean, normalized data is prerequisite for any advanced analytics. Foundation first.
+
+## Tech Decisions
+
+**Entity Relationships**: Proper TypeORM foreign keys eliminate data redundancy and enable complex queries  
+**UI Framework**: @dnd-kit provides accessible, performant drag-and-drop without heavy dependencies  
+**Filter Architecture**: Client-side filtering with proper state management for responsive user experience  
+**Component Design**: Maintainable separation of concerns with clear data contracts between components
+
+## Database Architecture Improvements
+
+**Before**: Deal table storing `sales_rep` as string, causing data redundancy  
+**After**: Deal table with `sales_rep_id` FK to SalesRep entity, proper normalization
+
+**Migration Strategy**: 
+1. Created SalesRep entity with all necessary fields (id, name, email, territory, active, timestamps)
+2. Updated Deal entity to include both sales_rep_id and sales_rep relationship
+3. Modified seed file to create SalesRep entities first, then reference them in Deal creation
+4. Updated all APIs to use proper repository joins and entity relationships
+5. Fixed all test files to mock SalesRep repositories and use correct entity structure
+
+## UI/UX Enhancements
+
+**Collapsible Dashboard**: All cards now collapsible with default expanded state configuration  
+**Drag-and-Drop Reordering**: Users can customize dashboard layout with default order: Territory Summary → Deal List → Workload Analysis → Bulk Reassignment → Audit Trail  
+**Enhanced Filtering**: Deal List now supports filtering by sales rep and territory in addition to search  
+**Readability Improvements**: Darker text colors (gray-700/900 instead of gray-600) for better accessibility  
+**Business Logic Accuracy**: Utilization calculations and reassignment restrictions properly handle closed deals
+
+---
+
+# Bulk Territory Reorganization Tool - What I Built & Why (PR #3)
+
+## The Gist
+
+Built a sophisticated bulk reorganization tool that enables sales managers to efficiently rebalance territories and redistribute deals at scale. Moves beyond individual deal assignment to support major territory reshuffles with impact preview, conflict detection, and comprehensive audit logging.
+
+## What I Built
+
+**Core Bulk Operations:**
+- Multi-select deal interface with advanced filtering capabilities
+- Real-time impact preview showing value, count, and rep workload changes
+- Conflict detection preventing overload situations before they happen
+- Batch audit logging for compliance and rollback capabilities
+- Sortable columns and stage color matching across components
+
+**API Endpoints:**
+- `POST /api/deals/bulk-reassign` - execute bulk territory/rep changes with validation
+- `POST /api/deals/preview-bulk` - preview impact without committing changes
+- Enhanced audit trail to handle batch operations with single event IDs
+
+**Frontend:**
+- BulkReorganizationTool component with selection and filtering interface
+- Impact preview panel showing before/after workload distribution
+- Conflict warnings with suggested alternatives
+- Batch operation confirmation with detailed change summary
+- Exclusion of closed deals from bulk reassignment operations
+
+## Scope Cuts (Hour 3!)
+
+### Advanced Drag-and-Drop → Simple Transfer Interface
+**Cut**: Complex territory map visualization with drag zones  
+**Built**: Clean selection interface with comprehensive filtering  
+**Why**: Visual territory maps require geographic data we don't have. Selection interface covers bulk operations efficiently.
+
+### Rollback System → Audit Trail Reference
+**Cut**: One-click rollback of bulk operations  
+**Built**: Detailed audit trail with batch operation grouping  
+**Why**: Rollback needs transaction management complexity. Audit trail enables manual reversal when needed.
+
+### Advanced Filters → Core Business Filters  
+**Cut**: Complex query builder with custom field combinations  
+**Built**: Territory, rep, value range, and stage filters  
+**Why**: Core filters handle most reorganization scenarios. Advanced filtering can be added iteratively.
+
+## Tech Decisions
+
+**Batch Processing**: Single API call with transaction-style validation to prevent partial updates  
+**Preview System**: Separate endpoint calculates impacts without side effects  
+**Audit Strategy**: Groups related changes under single batch operation ID  
+**UI Patterns**: Follows existing dashboard patterns for consistency
+
+---
+
 # Rep Workload Balancing Dashboard - What I Built & Why (PR #2)
 
 ## The Gist
