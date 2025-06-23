@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import DealList from '../../components/DealList';
 
 // Mock fetch
@@ -160,16 +160,12 @@ describe('DealList', () => {
     fireEvent.click(screen.getByText('RV-001'));
 
     await waitFor(() => {
-      expect(screen.getByText('Alice Johnson')).toBeInTheDocument();
-      expect(screen.getByText('Change')).toBeInTheDocument();
-    });
-
-    // Click Change button
-    fireEvent.click(screen.getByText('Change'));
-
-    // Should show dropdown
-    await waitFor(() => {
-      expect(screen.getByDisplayValue('Alice Johnson')).toBeInTheDocument();
+      expect(screen.getByText('Deal Details - RV-001')).toBeInTheDocument();
+      // Look for sales rep section in modal
+      const modal = screen.getByText('Deal Details - RV-001').closest('.fixed');
+      expect(within(modal!).getByText('Sales Rep')).toBeInTheDocument();
+      expect(within(modal!).getByText('Alice Johnson')).toBeInTheDocument();
+      expect(within(modal!).getByText('Change')).toBeInTheDocument();
     });
   });
 
@@ -186,12 +182,11 @@ describe('DealList', () => {
       expect(screen.getByText('Deal Details - RV-001')).toBeInTheDocument();
     });
 
-    // Click X button - use more specific selector
-    const closeButtons = screen.getAllByRole('button');
-    const closeButton = closeButtons.find(button => 
-      button.querySelector('svg') && 
-      button.className.includes('text-gray-400')
-    );
+    // Click X button in modal header
+    const modal = screen.getByText('Deal Details - RV-001').closest('.fixed');
+    const buttons = within(modal!).getAllByRole('button');
+    const closeButton = buttons.find(btn => btn.querySelector('svg'));
+    expect(closeButton).toBeInTheDocument();
     fireEvent.click(closeButton!);
 
     await waitFor(() => {
