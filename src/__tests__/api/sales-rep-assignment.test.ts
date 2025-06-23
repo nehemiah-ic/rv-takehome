@@ -11,7 +11,12 @@ jest.mock("../../data-source");
 const mockInitializeDataSource = initializeDataSource as jest.MockedFunction<typeof initializeDataSource>;
 
 describe("/api/deals/[id]/sales-rep", () => {
+  let mockSalesRepRepository: any;
+  
   beforeEach(() => {
+    mockSalesRepRepository = {
+      findOne: jest.fn(),
+    };
     jest.clearAllMocks();
   });
 
@@ -20,7 +25,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const mockDeal: Partial<Deal> = {
         id: 1,
         deal_id: "RV-001",
-        sales_rep: "Old Rep",
+        sales_rep_name: "Old Rep",
         territory: "West Coast",
         updated_date: "2023-01-01T00:00:00.000Z",
       };
@@ -29,7 +34,7 @@ describe("/api/deals/[id]/sales-rep", () => {
         findOne: jest.fn().mockResolvedValue(mockDeal),
         save: jest.fn().mockResolvedValue({
           ...mockDeal,
-          sales_rep: "Jennifer Walsh",
+          sales_rep_name: "Jennifer Walsh",
         }),
       };
       const mockAuditRepository = {
@@ -40,6 +45,7 @@ describe("/api/deals/[id]/sales-rep", () => {
         getRepository: jest.fn().mockImplementation((entity) => {
           if (entity.name === 'Deal') return mockDealRepository;
           if (entity.name === 'AuditLog') return mockAuditRepository;
+          if (entity.name === 'SalesRep') return mockSalesRepRepository;
           return mockDealRepository;
         }),
       };
@@ -48,7 +54,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const request = new NextRequest("http://localhost:3000/api/deals/1/sales-rep", {
         method: "PATCH",
         body: JSON.stringify({
-          sales_rep: "Jennifer Walsh",
+          sales_rep_name: "Jennifer Walsh",
         }),
       });
 
@@ -57,11 +63,11 @@ describe("/api/deals/[id]/sales-rep", () => {
 
       expect(response.status).toBe(200);
       expect(data.deal_id).toBe("RV-001");
-      expect(data.sales_rep).toBe("Jennifer Walsh");
+      expect(data.sales_rep?.name).toBe("Jennifer Walsh");
       expect(data.territory).toBe("West Coast");
       expect(mockDealRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          sales_rep: "Jennifer Walsh",
+          sales_rep_name: "Jennifer Walsh",
         })
       );
       expect(mockAuditRepository.create).toHaveBeenCalled();
@@ -72,7 +78,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const request = new NextRequest("http://localhost:3000/api/deals/invalid/sales-rep", {
         method: "PATCH",
         body: JSON.stringify({
-          sales_rep: "Jennifer Walsh",
+          sales_rep_name: "Jennifer Walsh",
         }),
       });
 
@@ -103,7 +109,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const request = new NextRequest("http://localhost:3000/api/deals/999/sales-rep", {
         method: "PATCH",
         body: JSON.stringify({
-          sales_rep: "Jennifer Walsh",
+          sales_rep_name: "Jennifer Walsh",
         }),
       });
 
@@ -163,7 +169,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const request = new NextRequest("http://localhost:3000/api/deals/1/sales-rep", {
         method: "PATCH",
         body: JSON.stringify({
-          sales_rep: "Jennifer Walsh",
+          sales_rep_name: "Jennifer Walsh",
         }),
       });
 
@@ -178,7 +184,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const mockDeal: Partial<Deal> = {
         id: 1,
         deal_id: "RV-001",
-        sales_rep: "Old Rep",
+        sales_rep_name: "Old Rep",
         territory: "West Coast",
         updated_date: "2023-01-01T00:00:00.000Z",
       };
@@ -203,7 +209,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       const request = new NextRequest("http://localhost:3000/api/deals/1/sales-rep", {
         method: "PATCH",
         body: JSON.stringify({
-          sales_rep: "New Rep",
+          sales_rep_name: "New Rep",
         }),
       });
 
@@ -211,7 +217,7 @@ describe("/api/deals/[id]/sales-rep", () => {
 
       expect(mockDealRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          sales_rep: "New Rep",
+          sales_rep_name: "New Rep",
           updated_date: expect.any(String),
         })
       );

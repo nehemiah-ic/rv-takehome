@@ -6,6 +6,15 @@ import PerformanceMetrics from "../../components/PerformanceMetrics";
 const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 
 describe("PerformanceMetrics", () => {
+  const mockSalesReps = {
+    alice: { id: 1, name: "Alice Johnson", email: "alice@test.com", territory: "West", active: true },
+    bob: { id: 2, name: "Bob Smith", email: "bob@test.com", territory: "East", active: true },
+    john: { id: 3, name: "John Doe", email: "john@test.com", territory: "Central", active: true },
+    jane: { id: 4, name: "Jane Smith", email: "jane@test.com", territory: "North", active: true },
+    bobW: { id: 5, name: "Bob Wilson", email: "bobw@test.com", territory: "South", active: true },
+    charlie: { id: 6, name: "Charlie Brown", email: "charlie@test.com", territory: "West", active: true },
+    eve: { id: 7, name: "Eve Davis", email: "eve@test.com", territory: "East", active: true },
+  };
   beforeEach(() => {
     mockFetch.mockClear();
   });
@@ -20,7 +29,7 @@ describe("PerformanceMetrics", () => {
             deal_id: "DEAL-001",
             value: 50000,
             probability: 75,
-            sales_rep: "John Doe",
+            sales_rep_id: 6, sales_rep: mockSalesReps.john,
             transportation_mode: "trucking",
           },
           {
@@ -28,7 +37,7 @@ describe("PerformanceMetrics", () => {
             deal_id: "DEAL-002",
             value: 30000,
             probability: 60,
-            sales_rep: "Jane Smith",
+            sales_rep_id: 1, sales_rep: mockSalesReps.jane,
             transportation_mode: "rail",
           },
         ],
@@ -42,7 +51,7 @@ describe("PerformanceMetrics", () => {
             deal_id: "DEAL-003",
             value: 75000,
             probability: 80,
-            sales_rep: "John Doe",
+            sales_rep_id: 3, sales_rep: mockSalesReps.john,
             transportation_mode: "ocean",
           },
         ],
@@ -56,7 +65,7 @@ describe("PerformanceMetrics", () => {
             deal_id: "DEAL-004",
             value: 100000,
             probability: 90,
-            sales_rep: "Jane Smith",
+            sales_rep_id: 3, sales_rep: mockSalesReps.jane,
             transportation_mode: "air",
           },
         ],
@@ -70,7 +79,7 @@ describe("PerformanceMetrics", () => {
             deal_id: "DEAL-005",
             value: 80000,
             probability: 85,
-            sales_rep: "Bob Wilson",
+            sales_rep_id: 5, sales_rep: mockSalesReps.bobW,
             transportation_mode: "trucking",
           },
         ],
@@ -84,7 +93,7 @@ describe("PerformanceMetrics", () => {
             deal_id: "DEAL-006",
             value: 120000,
             probability: 100,
-            sales_rep: "John Doe",
+            sales_rep_id: 2, sales_rep: mockSalesReps.john,
             transportation_mode: "rail",
           },
           {
@@ -92,7 +101,7 @@ describe("PerformanceMetrics", () => {
             deal_id: "DEAL-007",
             value: 90000,
             probability: 100,
-            sales_rep: "Jane Smith",
+            sales_rep_id: 7, sales_rep: mockSalesReps.jane,
             transportation_mode: "ocean",
           },
         ],
@@ -106,7 +115,7 @@ describe("PerformanceMetrics", () => {
             deal_id: "DEAL-008",
             value: 60000,
             probability: 0,
-            sales_rep: "Bob Wilson",
+            sales_rep_id: 3, sales_rep: mockSalesReps.bobW,
             transportation_mode: "air",
           },
           {
@@ -114,7 +123,7 @@ describe("PerformanceMetrics", () => {
             deal_id: "DEAL-009",
             value: 40000,
             probability: 0,
-            sales_rep: "Alice Brown",
+            sales_rep_id: 3, sales_rep: mockSalesReps.alice,
             transportation_mode: "trucking",
           },
           {
@@ -122,7 +131,7 @@ describe("PerformanceMetrics", () => {
             deal_id: "DEAL-010",
             value: 70000,
             probability: 0,
-            sales_rep: "Charlie Davis",
+            sales_rep_id: 4, sales_rep: mockSalesReps.alice,
             transportation_mode: "rail",
           },
         ],
@@ -361,7 +370,7 @@ describe("PerformanceMetrics", () => {
               deal_id: "DEAL-001",
               value: 50000,
               probability: 75,
-              sales_rep: "John Doe",
+              sales_rep_id: 3, sales_rep: mockSalesReps.john,
               transportation_mode: "trucking",
             },
           ],
@@ -375,7 +384,7 @@ describe("PerformanceMetrics", () => {
               deal_id: "DEAL-002",
               value: 30000,
               probability: 60,
-              sales_rep: "Jane Smith",
+              sales_rep_id: 7, sales_rep: mockSalesReps.jane,
               transportation_mode: "rail",
             },
           ],
@@ -389,7 +398,7 @@ describe("PerformanceMetrics", () => {
               deal_id: "DEAL-003",
               value: 75000,
               probability: 80,
-              sales_rep: "Bob Wilson",
+              sales_rep_id: 6, sales_rep: mockSalesReps.bobW,
               transportation_mode: "ocean",
             },
           ],
