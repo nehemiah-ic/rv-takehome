@@ -222,18 +222,20 @@ const RepWorkloadDashboard: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Territories
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider relative">
                   <div className="flex items-center space-x-1">
                     <span>Utilization</span>
-                    <div className="group relative">
-                      <svg className="w-4 h-4 text-gray-400 cursor-help" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="group">
+                      <svg className="w-4 h-4 text-gray-400 cursor-help hover:text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                       </svg>
-                      <div className="absolute bottom-full left-0 mb-2 w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                        <strong>Utilization Logic:</strong><br/>
-                        <strong>Overloaded:</strong> 8+ deals OR $200K+ pipeline OR $50K+ avg deal<br/>
-                        <strong>Underutilized:</strong> ≤2 deals AND ≤$50K pipeline AND ≤$20K avg deal<br/>
-                        <strong>Balanced:</strong> Everything else
+                      <div className="invisible group-hover:visible absolute top-full right-0 mt-2 w-72 p-3 bg-black text-white text-xs rounded-lg shadow-xl z-[9999] border border-gray-700">
+                        <div className="space-y-1">
+                          <div className="font-semibold text-yellow-300">Utilization Logic:</div>
+                          <div><span className="text-red-300 font-medium">Overloaded:</span> 8+ deals OR $200K+ pipeline OR $50K+ avg deal</div>
+                          <div><span className="text-yellow-300 font-medium">Underutilized:</span> ≤2 deals AND ≤$50K pipeline AND ≤$20K avg deal</div>
+                          <div><span className="text-green-300 font-medium">Balanced:</span> Everything else</div>
+                        </div>
                       </div>
                     </div>
                   </div>

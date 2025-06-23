@@ -5,8 +5,16 @@ import { AuditLog } from "../../../lib/entities/auditLog/AuditLog";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const dealId = searchParams.get('dealId');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const dealIdParam = searchParams.get('dealId');
+    const limitParam = searchParams.get('limit');
+    
+    const dealId = dealIdParam ? parseInt(dealIdParam) : null;
+    const limit = limitParam ? parseInt(limitParam) : 50;
+    
+    // Validate dealId is a valid number
+    const isValidDealId = dealId !== null && !isNaN(dealId) && dealId > 0;
+    // Validate limit is a valid number, fallback to 50
+    const validLimit = !isNaN(limit) && limit > 0 ? limit : 50;
 
     const dataSource = await initializeDataSource();
     const auditRepository = dataSource.getRepository(AuditLog);
@@ -14,11 +22,11 @@ export async function GET(request: NextRequest) {
     let query = auditRepository.createQueryBuilder('audit')
       .orderBy('audit.changedAt', 'DESC');
 
-    if (dealId) {
-      query = query.where('audit.dealId = :dealId', { dealId: parseInt(dealId) });
+    if (isValidDealId) {
+      query = query.where('audit.dealId = :dealId', { dealId });
     }
 
-    const auditLogs = await query.limit(limit).getMany();
+    const auditLogs = await query.limit(validLimit).getMany();
 
     return NextResponse.json({
       auditLogs,
