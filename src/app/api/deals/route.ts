@@ -49,7 +49,9 @@ export async function GET() {
   try {
     const dataSource = await initializeDataSource();
     const dealRepository = dataSource.getRepository(Deal);
-    const deals = await dealRepository.find();
+    const deals = await dealRepository.find({
+      relations: ['sales_rep']
+    });
 
     const { totalDeals, stageAnalytics } = getStageAnalytics(deals);
 

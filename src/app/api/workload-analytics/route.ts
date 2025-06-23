@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { initializeDataSource } from "../../../data-source";
 import { Deal } from "../../../lib/entities/deals/Deal";
+import { SalesRep } from "../../../lib/entities/salesRep/SalesRep";
 
 interface RepWorkload {
   salesRep: string;
@@ -24,15 +25,20 @@ export async function GET() {
   try {
     const dataSource = await initializeDataSource();
     const dealRepository = dataSource.getRepository(Deal);
-    const deals = await dealRepository.find();
+    const salesRepRepository = dataSource.getRepository(SalesRep);
+    
+    // Fetch deals and sales reps in parallel
+    const [deals, salesReps] = await Promise.all([
+      dealRepository.find({
+        relations: ['sales_rep'],
+      }),
+      salesRepRepository.find({
+        where: { active: true },
+        order: { name: "ASC" },
+      }),
+    ]);
 
-    // Get all available sales reps (not just those with deals)
-    const salesRepsResponse = await fetch('http://localhost:3000/api/sales-reps');
-    let allAvailableReps: string[] = [];
-    if (salesRepsResponse.ok) {
-      const salesRepsData = await salesRepsResponse.json();
-      allAvailableReps = salesRepsData.sales_reps;
-    }
+    const allAvailableReps = salesReps.map(rep => rep.name);
 
     // Initialize all reps with zero deals
     const repWorkloads: Record<string, any> = {};
@@ -51,20 +57,20 @@ export async function GET() {
 
     // Add deals to existing rep workloads
     deals.forEach(deal => {
-      const rep = deal.sales_rep;
+      const repName = deal.sales_rep?.name;
       
-      if (repWorkloads[rep]) {
-        repWorkloads[rep].dealCount += 1;
-        repWorkloads[rep].totalValue += Number(deal.value);
+      if (repName && repWorkloads[repName]) {
+        repWorkloads[repName].dealCount += 1;
+        repWorkloads[repName].totalValue += Number(deal.value);
         if (deal.territory) {
-          repWorkloads[rep].territories.add(deal.territory);
+          repWorkloads[repName].territories.add(deal.territory);
         }
 
         // Track deals by stage
-        if (!repWorkloads[rep].dealsByStage[deal.stage]) {
-          repWorkloads[rep].dealsByStage[deal.stage] = 0;
+        if (!repWorkloads[repName].dealsByStage[deal.stage]) {
+          repWorkloads[repName].dealsByStage[deal.stage] = 0;
         }
-        repWorkloads[rep].dealsByStage[deal.stage] += 1;
+        repWorkloads[repName].dealsByStage[deal.stage] += 1;
       }
     });
 
