@@ -2,6 +2,43 @@ import { NextResponse } from "next/server";
 import { initializeDataSource } from "../../../data-source";
 import { Deal } from "../../../lib/entities/deals/Deal";
 
+// Function to auto-assign territory based on origin city
+function assignTerritory(originCity: string): string {
+  const city = originCity.toLowerCase();
+  
+  // West Coast
+  if (city.includes('los angeles') || city.includes('seattle') || city.includes('san francisco') || 
+      city.includes('portland') || city.includes('sacramento')) {
+    return 'West Coast';
+  }
+  
+  // East Coast  
+  if (city.includes('new york') || city.includes('boston') || city.includes('miami') || 
+      city.includes('philadelphia') || city.includes('atlanta')) {
+    return 'East Coast';
+  }
+  
+  // Midwest
+  if (city.includes('chicago') || city.includes('detroit') || city.includes('minneapolis') || 
+      city.includes('milwaukee') || city.includes('cleveland')) {
+    return 'Midwest';
+  }
+  
+  // South
+  if (city.includes('houston') || city.includes('dallas') || city.includes('austin') || 
+      city.includes('phoenix') || city.includes('denver')) {
+    return 'South';
+  }
+  
+  // Southwest
+  if (city.includes('phoenix') || city.includes('las vegas') || city.includes('albuquerque')) {
+    return 'Southwest';
+  }
+  
+  // Default for unmatched cities
+  return 'Other';
+}
+
 const sampleDeals = [
   {
     deal_id: "RV-001",
@@ -174,9 +211,13 @@ export async function POST() {
     await dealRepository.clear();
     console.log("Cleared existing deals");
 
-    // Insert sample data
+    // Insert sample data with auto-assigned territories
     for (const dealData of sampleDeals) {
-      const deal = dealRepository.create(dealData);
+      const dealWithTerritory = {
+        ...dealData,
+        territory: assignTerritory(dealData.origin_city)
+      };
+      const deal = dealRepository.create(dealWithTerritory);
       await dealRepository.save(deal);
     }
 
