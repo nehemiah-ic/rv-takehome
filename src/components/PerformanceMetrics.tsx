@@ -200,26 +200,26 @@ const PerformanceMetrics: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-4">
       {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {metricCards.map((metric, index) => (
           <div
             key={index}
-            className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
+            className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-xs font-medium text-gray-600 mb-1">
                   {metric.title}
                 </p>
-                <p className="text-2xl font-bold text-gray-900 mb-1">
+                <p className="text-lg font-bold text-gray-900 mb-1">
                   {metric.value}
                 </p>
                 <p className="text-xs text-gray-500">{metric.description}</p>
               </div>
               <div
-                className={`w-12 h-12 ${metric.color} rounded-lg flex items-center justify-center text-white text-xl`}
+                className={`w-8 h-8 ${metric.color} rounded flex items-center justify-center text-white text-sm`}
               >
                 {metric.icon}
               </div>

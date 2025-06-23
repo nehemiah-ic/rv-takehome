@@ -12,16 +12,30 @@ export const AppDataSource = new DataSource({
   subscribers: [],
 });
 
+// Global initialization promise to prevent concurrent initialization
+let initializationPromise: Promise<DataSource> | null = null;
+
 // Function to initialize the data source if not already initialized
 export async function initializeDataSource() {
-  if (!AppDataSource.isInitialized) {
+  if (AppDataSource.isInitialized) {
+    return AppDataSource;
+  }
+
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+
+  initializationPromise = (async () => {
     try {
       await AppDataSource.initialize();
       console.log("Data Source has been initialized!");
+      return AppDataSource;
     } catch (err) {
       console.error("Error during Data Source initialization:", err);
+      initializationPromise = null; // Reset on error so we can retry
       throw err;
     }
-  }
-  return AppDataSource;
+  })();
+
+  return initializationPromise;
 }

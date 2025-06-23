@@ -2,6 +2,7 @@ import React from "react";
 import DealList from "./DealList";
 import PerformanceMetrics from "./PerformanceMetrics";
 import PipelineFunnel from "./PipelineFunnel";
+import TerritoryDashboard from "./TerritoryDashboard";
 
 const PipelineDashboard: React.FC = () => {
   return (
@@ -11,29 +12,46 @@ const PipelineDashboard: React.FC = () => {
           Pipeline Analytics Dashboard
         </h1>
 
-        <div className="grid gap-6">
-          {/* Pipeline Overview Section */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Pipeline Overview
-            </h2>
-            <PipelineFunnel />
+        <div className="grid gap-4 lg:gap-6">
+          {/* Top Row - Pipeline Overview and Performance Metrics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-white rounded-lg shadow p-4 overflow-hidden">
+              <h2 className="text-lg font-semibold text-gray-800 mb-3">
+                Pipeline Overview
+              </h2>
+              <div className="overflow-hidden">
+                <PipelineFunnel />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-4 overflow-hidden">
+              <h2 className="text-lg font-semibold text-gray-800 mb-3">
+                Performance Metrics
+              </h2>
+              <div className="overflow-hidden">
+                <PerformanceMetrics />
+              </div>
+            </div>
           </div>
 
-          {/* Performance Metrics Section */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Performance Metrics
+          {/* Territory Management Section */}
+          <div className="bg-white rounded-lg shadow p-4 overflow-hidden">
+            <h2 className="text-lg font-semibold text-gray-800 mb-3">
+              Territory Management
             </h2>
-            <PerformanceMetrics />
+            <div className="overflow-hidden">
+              <TerritoryDashboard />
+            </div>
           </div>
 
           {/* Deal List Section */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          <div className="bg-white rounded-lg shadow p-4 overflow-hidden">
+            <h2 className="text-lg font-semibold text-gray-800 mb-3">
               Deal List
             </h2>
-            <DealList />
+            <div className="overflow-hidden">
+              <DealList />
+            </div>
           </div>
         </div>
       </div>

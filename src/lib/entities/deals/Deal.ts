@@ -46,4 +46,7 @@ export class Deal {
 
   @Column({ nullable: true })
   cargo_type?: string;
+
+  @Column({ nullable: true })
+  territory?: string;
 }
