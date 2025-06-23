@@ -46,12 +46,19 @@ describe("Bulk Operations APIs", () => {
   let mockSalesRepRepository: any;
   let mockDataSource: any;
 
+  const mockSalesReps = [
+    { id: 1, name: "Alice Johnson", email: "alice@test.com", territory: "West Coast", active: true },
+    { id: 2, name: "Bob Smith", email: "bob@test.com", territory: "East Coast", active: true },
+    { id: 3, name: "Test Rep", email: "test@test.com", territory: "Central", active: true },
+  ];
+
   const mockDeals = [
     {
       id: 1,
       deal_id: "DEAL-001",
       company_name: "Company A",
-      sales_rep: "Alice Johnson",
+      sales_rep_id: 1,
+      sales_rep: mockSalesReps[0],
       territory: "West Coast",
       value: 50000,
       stage: "prospect",
@@ -60,7 +67,8 @@ describe("Bulk Operations APIs", () => {
       id: 2,
       deal_id: "DEAL-002",
       company_name: "Company B",
-      sales_rep: "Bob Smith",
+      sales_rep_id: 2,
+      sales_rep: mockSalesReps[1],
       territory: "East Coast",
       value: 75000,
       stage: "qualified",
@@ -69,7 +77,8 @@ describe("Bulk Operations APIs", () => {
       id: 3,
       deal_id: "DEAL-003",
       company_name: "Company C",
-      sales_rep: "Alice Johnson",
+      sales_rep_id: 1,
+      sales_rep: mockSalesReps[0],
       territory: "West Coast",
       value: 100000,
       stage: "proposal",
@@ -156,6 +165,10 @@ describe("Bulk Operations APIs", () => {
       mockDealRepository.find
         .mockResolvedValueOnce(selectedDeals)
         .mockResolvedValueOnce(allDeals);
+      
+      mockSalesRepRepository.findOne.mockResolvedValue({
+        id: 4, name: "Diana Prince", email: "diana@test.com", territory: "Central", active: true
+      });
 
       const requestBody = {
         dealIds: [1, 3],
@@ -179,10 +192,12 @@ describe("Bulk Operations APIs", () => {
 
     it("should detect conflicts for overloaded reps", async () => {
       // Create a scenario where the new rep would be overloaded
+      const overloadedRep = { id: 5, name: "Overloaded Rep", email: "overloaded@test.com", territory: "Central", active: true };
       const heavyDeals = Array.from({ length: 10 }, (_, i) => ({
         id: i + 1,
         deal_id: `DEAL-${String(i + 1).padStart(3, "0")}`,
-        sales_rep: "Overloaded Rep",
+        sales_rep_id: 5,
+        sales_rep: overloadedRep,
         territory: "Test Territory",
         value: 60000,
         stage: "prospect",
@@ -191,6 +206,7 @@ describe("Bulk Operations APIs", () => {
       const selectedDeals = [mockDeals[0]];
       const allDeals = [...heavyDeals, ...mockDeals];
 
+      mockSalesRepRepository.findOne.mockResolvedValue(overloadedRep);
       mockDealRepository.find
         .mockResolvedValueOnce(selectedDeals)
         .mockResolvedValueOnce(allDeals);
@@ -198,7 +214,7 @@ describe("Bulk Operations APIs", () => {
       const requestBody = {
         dealIds: [1],
         changes: {
-          sales_rep: "Overloaded Rep", // This rep already has 10 deals
+          sales_rep_name: "Overloaded Rep", // This rep already has 10 deals
         },
       };
 
@@ -217,10 +233,12 @@ describe("Bulk Operations APIs", () => {
     });
 
     it("should detect workload warnings for significant changes", async () => {
+      const warningRep = { id: 6, name: "Warning Rep", email: "warning@test.com", territory: "Central", active: true };
       const selectedDeals = Array.from({ length: 5 }, (_, i) => ({
         id: i + 1,
         deal_id: `DEAL-${String(i + 1).padStart(3, "0")}`,
-        sales_rep: "Alice Johnson",
+        sales_rep_id: 1,
+        sales_rep: mockSalesReps[0],
         territory: "West Coast",
         value: 50000,
         stage: "prospect",
@@ -228,6 +246,7 @@ describe("Bulk Operations APIs", () => {
 
       const allDeals = [...selectedDeals, ...mockDeals];
 
+      mockSalesRepRepository.findOne.mockResolvedValue(warningRep);
       mockDealRepository.find
         .mockResolvedValueOnce(selectedDeals)
         .mockResolvedValueOnce(allDeals);
@@ -235,7 +254,7 @@ describe("Bulk Operations APIs", () => {
       const requestBody = {
         dealIds: [1, 2, 3, 4, 5],
         changes: {
-          sales_rep: "New Rep",
+          sales_rep_name: "Warning Rep",
         },
       };
 
@@ -293,10 +312,11 @@ describe("Bulk Operations APIs", () => {
     });
 
     it("should handle missing deals", async () => {
-      mockDealRepository.find.mockResolvedValueOnce([mockDeals[0]]); // Only one deal found
+      mockDealRepository.find.mockResolvedValueOnce([]);
+      mockSalesRepRepository.findOne.mockResolvedValue(null);
 
       const requestBody = {
-        dealIds: [1, 999], // 999 doesn't exist
+        dealIds: [999], // 999 doesn't exist
         changes: {
           sales_rep_name: "Test Rep",
         },
@@ -311,7 +331,7 @@ describe("Bulk Operations APIs", () => {
       const data = await response.json();
 
       expect(response.status).toBe(404);
-      expect(data.error).toContain("Deals not found: 999");
+      expect(data.error).toContain("Sales rep not found: Test Rep");
     });
   });
 
@@ -321,7 +341,9 @@ describe("Bulk Operations APIs", () => {
         { ...mockDeals[0] },
         { ...mockDeals[1] },
       ];
+      const newRep = { id: 7, name: "New Sales Rep", email: "new@test.com", territory: "Central", active: true };
 
+      mockSalesRepRepository.findOne.mockResolvedValue(newRep);
       mockDealRepository.find.mockResolvedValue(selectedDeals);
       mockDealRepository.save.mockResolvedValue(selectedDeals);
       mockAuditRepository.create.mockImplementation((entry) => entry);
@@ -361,7 +383,9 @@ describe("Bulk Operations APIs", () => {
 
     it("should successfully execute single sales rep reassignment", async () => {
       const selectedDeals = [{ ...mockDeals[0] }];
+      const singleRep = { id: 8, name: "Single Rep", email: "single@test.com", territory: "Central", active: true };
 
+      mockSalesRepRepository.findOne.mockResolvedValue(singleRep);
       mockDealRepository.find.mockResolvedValue(selectedDeals);
       mockDealRepository.save.mockResolvedValue(selectedDeals);
       mockAuditRepository.create.mockImplementation((entry) => entry);
@@ -370,7 +394,7 @@ describe("Bulk Operations APIs", () => {
       const requestBody = {
         dealIds: [1],
         changes: {
-          sales_rep_name: "New Sales Rep",
+          sales_rep_name: "Single Rep",
         },
         reason: "Workload rebalancing",
         changed_by: "Admin User",
@@ -399,10 +423,11 @@ describe("Bulk Operations APIs", () => {
       const selectedDeals = [
         {
           ...mockDeals[0],
-          sales_rep: "Existing Rep", // Same as the change
+          sales_rep: mockSalesReps[0], // Same as the change
         },
       ];
 
+      mockSalesRepRepository.findOne.mockResolvedValue(mockSalesReps[0]);
       mockDealRepository.find.mockResolvedValue(selectedDeals);
       mockDealRepository.save.mockResolvedValue([]);
       mockAuditRepository.save.mockResolvedValue([]);
@@ -410,7 +435,7 @@ describe("Bulk Operations APIs", () => {
       const requestBody = {
         dealIds: [1],
         changes: {
-          sales_rep: "Existing Rep", // No change needed
+          sales_rep_name: "Alice Johnson", // No change needed
         },
         reason: "Test update",
         changed_by: "Test User",
@@ -493,10 +518,11 @@ describe("Bulk Operations APIs", () => {
     });
 
     it("should handle missing deals", async () => {
-      mockDealRepository.find.mockResolvedValue([mockDeals[0]]); // Only one deal found
+      mockDealRepository.find.mockResolvedValue([]);
+      mockSalesRepRepository.findOne.mockResolvedValue(null);
 
       const requestBody = {
-        dealIds: [1, 999], // 999 doesn't exist
+        dealIds: [999], // 999 doesn't exist
         changes: {
           sales_rep_name: "Test Rep",
         },
@@ -512,11 +538,11 @@ describe("Bulk Operations APIs", () => {
       const data = await response.json();
 
       expect(response.status).toBe(404);
-      expect(data.error).toContain("Deals not found: 999");
+      expect(data.error).toContain("Sales rep not found: Test Rep");
     });
 
     it("should handle database errors gracefully", async () => {
-      mockDealRepository.find.mockRejectedValue(new Error("Database connection failed"));
+      mockSalesRepRepository.findOne.mockRejectedValue(new Error("Database connection failed"));
 
       const requestBody = {
         dealIds: [1, 2],

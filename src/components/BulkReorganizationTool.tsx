@@ -60,6 +60,10 @@ const BulkReorganizationTool: React.FC = () => {
     maxValue: '',
   });
   
+  // Sorting state
+  const [sortField, setSortField] = useState<'value' | 'stage' | 'sales_rep' | 'territory'>('value');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  
   // Bulk operation state
   const [bulkChanges, setBulkChanges] = useState({
     sales_rep: '',
@@ -101,13 +105,43 @@ const BulkReorganizationTool: React.FC = () => {
     ? Object.values(pipelineData.stageAnalytics).flatMap(stage => stage.deals)
     : [];
 
-  // Apply filters to get filtered deals
+  // Apply filters and sorting to get filtered deals (exclude closed deals)
   const filteredDeals = allDeals.filter(deal => {
+    // Exclude closed deals from bulk reassignment
+    if (deal.stage === 'closed_won' || deal.stage === 'closed_lost') return false;
     if (filters.sales_rep && deal.sales_rep?.name !== filters.sales_rep) return false;
     if (filters.stage && deal.stage !== filters.stage) return false;
     if (filters.minValue && deal.value < Number(filters.minValue)) return false;
     if (filters.maxValue && deal.value > Number(filters.maxValue)) return false;
     return true;
+  }).sort((a, b) => {
+    let aValue: any;
+    let bValue: any;
+    
+    switch (sortField) {
+      case 'value':
+        aValue = a.value;
+        bValue = b.value;
+        break;
+      case 'stage':
+        aValue = a.stage;
+        bValue = b.stage;
+        break;
+      case 'sales_rep':
+        aValue = a.sales_rep?.name || '';
+        bValue = b.sales_rep?.name || '';
+        break;
+      case 'territory':
+        aValue = a.territory || '';
+        bValue = b.territory || '';
+        break;
+      default:
+        return 0;
+    }
+    
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
   });
 
   const handleDealSelection = (dealId: number, selected: boolean) => {
@@ -128,6 +162,15 @@ const BulkReorganizationTool: React.FC = () => {
       setSelectedDeals(new Set(filteredDeals.map(deal => deal.id)));
     }
     setPreview(null);
+  };
+
+  const handleSort = (field: 'value' | 'stage' | 'sales_rep' | 'territory') => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
   };
 
   const handlePreview = async () => {
@@ -222,6 +265,18 @@ const BulkReorganizationTool: React.FC = () => {
     }).format(value);
   };
 
+  const getStageColor = (stage: string) => {
+    const colors = {
+      prospect: "bg-blue-100 text-blue-800",
+      qualified: "bg-green-100 text-green-800",
+      proposal: "bg-yellow-100 text-yellow-800",
+      negotiation: "bg-orange-100 text-orange-800",
+      closed_won: "bg-emerald-100 text-emerald-800",
+      closed_lost: "bg-red-100 text-red-800",
+    };
+    return colors[stage as keyof typeof colors] || "bg-gray-100 text-gray-800";
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -243,6 +298,9 @@ const BulkReorganizationTool: React.FC = () => {
       {/* Filters Section */}
       <div className="bg-white border border-gray-200 rounded-lg p-4">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Deal Filters</h3>
+        <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+          <strong>Note:</strong> Only active deals (not closed won/lost) can be reassigned.
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Sales Rep</label>
@@ -265,13 +323,11 @@ const BulkReorganizationTool: React.FC = () => {
               onChange={(e) => setFilters({ ...filters, stage: e.target.value })}
               className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
             >
-              <option value="">All Stages</option>
+              <option value="">All Active Stages</option>
               <option value="prospect">Prospect</option>
               <option value="qualified">Qualified</option>
               <option value="proposal">Proposal</option>
               <option value="negotiation">Negotiation</option>
-              <option value="closed_won">Closed Won</option>
-              <option value="closed_lost">Closed Lost</option>
             </select>
           </div>
 
@@ -402,23 +458,23 @@ const BulkReorganizationTool: React.FC = () => {
 
           {/* Summary */}
           <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded">
-            <h4 className="font-medium text-blue-800 mb-2">📊 Impact Summary</h4>
+            <h4 className="font-medium text-blue-900 mb-2">📊 Impact Summary</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <span className="text-blue-700">Deals:</span>
-                <div className="font-semibold">{preview.summary.totalDeals}</div>
+                <span className="text-blue-900 font-medium">Deals:</span>
+                <div className="font-semibold text-gray-900">{preview.summary.totalDeals}</div>
               </div>
               <div>
-                <span className="text-blue-700">Total Value:</span>
-                <div className="font-semibold">{formatCurrency(preview.summary.totalValue)}</div>
+                <span className="text-blue-900 font-medium">Total Value:</span>
+                <div className="font-semibold text-gray-900">{formatCurrency(preview.summary.totalValue)}</div>
               </div>
               <div>
-                <span className="text-blue-700">Affected Reps:</span>
-                <div className="font-semibold">{preview.summary.affectedReps.length}</div>
+                <span className="text-blue-900 font-medium">Affected Reps:</span>
+                <div className="font-semibold text-gray-900">{preview.summary.affectedReps.length}</div>
               </div>
               <div>
-                <span className="text-blue-700">Change Types:</span>
-                <div className="font-semibold">{preview.summary.changeTypes.join(', ')}</div>
+                <span className="text-blue-900 font-medium">Change Types:</span>
+                <div className="font-semibold text-gray-900">{preview.summary.changeTypes.join(', ')}</div>
               </div>
             </div>
           </div>
@@ -473,17 +529,57 @@ const BulkReorganizationTool: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Company
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Value
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('value')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Value</span>
+                    {sortField === 'value' && (
+                      <span className="text-blue-500">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Stage
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('stage')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Stage</span>
+                    {sortField === 'stage' && (
+                      <span className="text-blue-500">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Sales Rep
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('sales_rep')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Sales Rep</span>
+                    {sortField === 'sales_rep' && (
+                      <span className="text-blue-500">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Territory
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('territory')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Territory</span>
+                    {sortField === 'territory' && (
+                      <span className="text-blue-500">
+                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
                 </th>
               </tr>
             </thead>
@@ -505,7 +601,7 @@ const BulkReorganizationTool: React.FC = () => {
                   <td className="px-4 py-4 text-sm text-gray-900">{deal.company_name}</td>
                   <td className="px-4 py-4 text-sm text-gray-900">{formatCurrency(deal.value)}</td>
                   <td className="px-4 py-4 text-sm">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStageColor(deal.stage)} capitalize`}>
                       {deal.stage.replace('_', ' ')}
                     </span>
                   </td>
