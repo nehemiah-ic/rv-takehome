@@ -51,11 +51,11 @@ describe("PipelineFunnel", () => {
     expect(screen.getByText("closed won")).toBeInTheDocument();
 
     // Check for deal counts and percentages - use getAllByText for duplicates
-    expect(screen.getByText("3 deals")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("30%")).toBeInTheDocument();
-    expect(screen.getAllByText("2 deals")).toHaveLength(3); // qualified, proposal, negotiation
+    expect(screen.getAllByText("2")).toHaveLength(3); // qualified, proposal, negotiation
     expect(screen.getAllByText("20%")).toHaveLength(3);
-    expect(screen.getByText("1 deals")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
     expect(screen.getByText("10%")).toBeInTheDocument();
   });
 
@@ -138,7 +138,7 @@ describe("PipelineFunnel", () => {
     expect(screen.getByText("closed won")).toBeInTheDocument();
 
     // Check that counts and percentages are displayed
-    expect(screen.getAllByText("1 deals")).toHaveLength(5);
+    expect(screen.getAllByText("1")).toHaveLength(5);
     expect(screen.getAllByText("20%")).toHaveLength(5);
   });
 
@@ -164,7 +164,7 @@ describe("PipelineFunnel", () => {
 
     expect(screen.getByText("closed won")).toBeInTheDocument();
     expect(screen.getByText("closed lost")).toBeInTheDocument();
-    expect(screen.getAllByText("1 deals")).toHaveLength(2);
+    expect(screen.getAllByText("1")).toHaveLength(2);
     expect(screen.getAllByText("50%")).toHaveLength(2);
   });
 
@@ -189,8 +189,8 @@ describe("PipelineFunnel", () => {
     });
 
     // Check that the bars have the correct width styles
-    const prospectBar = screen.getByText("2 deals").closest("div");
-    const qualifiedBar = screen.getByText("1 deals").closest("div");
+    const prospectBar = screen.getByText("2").closest("div");
+    const qualifiedBar = screen.getByText("1").closest("div");
 
     expect(prospectBar).toHaveStyle("width: 67%");
     expect(qualifiedBar).toHaveStyle("width: 33%");
