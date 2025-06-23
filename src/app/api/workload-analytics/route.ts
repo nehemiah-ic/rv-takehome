@@ -26,48 +26,64 @@ export async function GET() {
     const dealRepository = dataSource.getRepository(Deal);
     const deals = await dealRepository.find();
 
-    // Group deals by sales rep
-    const repWorkloads = deals.reduce((accumulator, deal) => {
+    // Get all available sales reps (not just those with deals)
+    const salesRepsResponse = await fetch('http://localhost:3000/api/sales-reps');
+    let allAvailableReps: string[] = [];
+    if (salesRepsResponse.ok) {
+      const salesRepsData = await salesRepsResponse.json();
+      allAvailableReps = salesRepsData.sales_reps;
+    }
+
+    // Initialize all reps with zero deals
+    const repWorkloads: Record<string, any> = {};
+    allAvailableReps.forEach(rep => {
+      repWorkloads[rep] = {
+        salesRep: rep,
+        dealCount: 0,
+        totalValue: 0,
+        avgDealValue: 0,
+        territories: new Set(),
+        dealsByStage: {},
+        utilizationLevel: 'balanced' as const,
+        recommendations: [],
+      };
+    });
+
+    // Add deals to existing rep workloads
+    deals.forEach(deal => {
       const rep = deal.sales_rep;
       
-      if (!accumulator[rep]) {
-        accumulator[rep] = {
-          salesRep: rep,
-          dealCount: 0,
-          totalValue: 0,
-          avgDealValue: 0,
-          territories: new Set(),
-          dealsByStage: {},
-          utilizationLevel: 'balanced' as const,
-          recommendations: [],
-        };
-      }
+      if (repWorkloads[rep]) {
+        repWorkloads[rep].dealCount += 1;
+        repWorkloads[rep].totalValue += Number(deal.value);
+        if (deal.territory) {
+          repWorkloads[rep].territories.add(deal.territory);
+        }
 
-      accumulator[rep].dealCount += 1;
-      accumulator[rep].totalValue += Number(deal.value);
-      if (deal.territory) {
-        accumulator[rep].territories.add(deal.territory);
+        // Track deals by stage
+        if (!repWorkloads[rep].dealsByStage[deal.stage]) {
+          repWorkloads[rep].dealsByStage[deal.stage] = 0;
+        }
+        repWorkloads[rep].dealsByStage[deal.stage] += 1;
       }
-
-      // Track deals by stage
-      if (!accumulator[rep].dealsByStage[deal.stage]) {
-        accumulator[rep].dealsByStage[deal.stage] = 0;
-      }
-      accumulator[rep].dealsByStage[deal.stage] += 1;
-
-      return accumulator;
-    }, {} as Record<string, any>);
+    });
 
     // Calculate metrics and utilization levels
     const workloadData: RepWorkload[] = Object.values(repWorkloads).map((rep: any) => {
       rep.avgDealValue = rep.dealCount > 0 ? Math.round(rep.totalValue / rep.dealCount) : 0;
       rep.territories = Array.from(rep.territories);
       
-      // Determine utilization level (simple heuristic)
-      if (rep.dealCount >= 8) {
+      // Determine utilization level (considers deal count, value, and avg deal size)
+      const dealCountScore = rep.dealCount <= 2 ? -1 : rep.dealCount >= 8 ? 1 : 0;
+      const valueScore = rep.totalValue <= 50000 ? -1 : rep.totalValue >= 200000 ? 1 : 0;
+      const avgDealScore = rep.avgDealValue <= 20000 ? -1 : rep.avgDealValue >= 50000 ? 1 : 0;
+      
+      const totalScore = dealCountScore + valueScore + avgDealScore;
+      
+      if (totalScore >= 2) {
         rep.utilizationLevel = 'over';
         rep.recommendations.push('Consider redistributing deals to reduce workload');
-      } else if (rep.dealCount <= 2) {
+      } else if (totalScore <= -1) {
         rep.utilizationLevel = 'under';
         rep.recommendations.push('Has capacity for additional deals');
       } else {
@@ -104,17 +120,18 @@ export async function GET() {
       });
     }
 
-    // Calculate summary metrics
+    // Calculate summary metrics based on all available reps
     const totalDeals = deals.length;
     const totalValue = deals.reduce((sum, deal) => sum + Number(deal.value), 0);
-    const avgDealsPerRep = workloadData.length > 0 ? Math.round(totalDeals / workloadData.length) : 0;
-    const avgValuePerRep = workloadData.length > 0 ? Math.round(totalValue / workloadData.length) : 0;
+    const totalAvailableReps = allAvailableReps.length;
+    const avgDealsPerRep = totalAvailableReps > 0 ? Math.round(totalDeals / totalAvailableReps) : 0;
+    const avgValuePerRep = totalAvailableReps > 0 ? Math.round(totalValue / totalAvailableReps) : 0;
 
     return NextResponse.json({
       summary: {
         totalDeals,
         totalValue,
-        totalReps: workloadData.length,
+        totalReps: totalAvailableReps,
         avgDealsPerRep,
         avgValuePerRep,
         overloadedReps: overloadedReps.length,

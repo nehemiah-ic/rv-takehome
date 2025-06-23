@@ -23,31 +23,44 @@ const AuditTrail: React.FC<AuditTrailProps> = ({ dealId, showAllDeals = false })
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const fetchAuditLogs = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (dealId && !showAllDeals) {
+        params.append('dealId', dealId.toString());
+      }
+      params.append('limit', '100');
+
+      const response = await fetch(`/api/audit-trail?${params}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch audit trail");
+      }
+      const data = await response.json();
+      setAuditLogs(data.auditLogs);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAuditLogs = async () => {
-      try {
-        const params = new URLSearchParams();
-        if (dealId && !showAllDeals) {
-          params.append('dealId', dealId.toString());
-        }
-        params.append('limit', '100');
-
-        const response = await fetch(`/api/audit-trail?${params}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch audit trail");
-        }
-        const data = await response.json();
-        setAuditLogs(data.auditLogs);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAuditLogs();
-  }, [dealId, showAllDeals]);
+  }, [dealId, showAllDeals, refreshKey]);
+
+  // Listen for deal changes to auto-refresh
+  useEffect(() => {
+    const handleDealUpdate = () => {
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('dealUpdated', handleDealUpdate);
+    return () => window.removeEventListener('dealUpdated', handleDealUpdate);
+  }, []);
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString();
