@@ -25,15 +25,23 @@ describe("/api/deals/[id]/sales-rep", () => {
         updated_date: "2023-01-01T00:00:00.000Z",
       };
 
-      const mockRepository = {
+      const mockDealRepository = {
         findOne: jest.fn().mockResolvedValue(mockDeal),
         save: jest.fn().mockResolvedValue({
           ...mockDeal,
           sales_rep: "Jennifer Walsh",
         }),
       };
+      const mockAuditRepository = {
+        create: jest.fn().mockReturnValue({}),
+        save: jest.fn().mockResolvedValue({}),
+      };
       const mockDataSource = {
-        getRepository: jest.fn().mockReturnValue(mockRepository),
+        getRepository: jest.fn().mockImplementation((entity) => {
+          if (entity.name === 'Deal') return mockDealRepository;
+          if (entity.name === 'AuditLog') return mockAuditRepository;
+          return mockDealRepository;
+        }),
       };
       mockInitializeDataSource.mockResolvedValue(mockDataSource as any);
 
@@ -51,11 +59,13 @@ describe("/api/deals/[id]/sales-rep", () => {
       expect(data.deal_id).toBe("RV-001");
       expect(data.sales_rep).toBe("Jennifer Walsh");
       expect(data.territory).toBe("West Coast");
-      expect(mockRepository.save).toHaveBeenCalledWith(
+      expect(mockDealRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           sales_rep: "Jennifer Walsh",
         })
       );
+      expect(mockAuditRepository.create).toHaveBeenCalled();
+      expect(mockAuditRepository.save).toHaveBeenCalled();
     });
 
     it("should return 400 for invalid deal ID", async () => {
@@ -74,11 +84,19 @@ describe("/api/deals/[id]/sales-rep", () => {
     });
 
     it("should return 404 for non-existent deal", async () => {
-      const mockRepository = {
+      const mockDealRepository = {
         findOne: jest.fn().mockResolvedValue(null),
       };
+      const mockAuditRepository = {
+        create: jest.fn().mockReturnValue({}),
+        save: jest.fn().mockResolvedValue({}),
+      };
       const mockDataSource = {
-        getRepository: jest.fn().mockReturnValue(mockRepository),
+        getRepository: jest.fn().mockImplementation((entity) => {
+          if (entity.name === 'Deal') return mockDealRepository;
+          if (entity.name === 'AuditLog') return mockAuditRepository;
+          return mockDealRepository;
+        }),
       };
       mockInitializeDataSource.mockResolvedValue(mockDataSource as any);
 
@@ -126,11 +144,19 @@ describe("/api/deals/[id]/sales-rep", () => {
     });
 
     it("should handle database errors", async () => {
-      const mockRepository = {
+      const mockDealRepository = {
         findOne: jest.fn().mockRejectedValue(new Error("Database error")),
       };
+      const mockAuditRepository = {
+        create: jest.fn().mockReturnValue({}),
+        save: jest.fn().mockResolvedValue({}),
+      };
       const mockDataSource = {
-        getRepository: jest.fn().mockReturnValue(mockRepository),
+        getRepository: jest.fn().mockImplementation((entity) => {
+          if (entity.name === 'Deal') return mockDealRepository;
+          if (entity.name === 'AuditLog') return mockAuditRepository;
+          return mockDealRepository;
+        }),
       };
       mockInitializeDataSource.mockResolvedValue(mockDataSource as any);
 
@@ -157,12 +183,20 @@ describe("/api/deals/[id]/sales-rep", () => {
         updated_date: "2023-01-01T00:00:00.000Z",
       };
 
-      const mockRepository = {
+      const mockDealRepository = {
         findOne: jest.fn().mockResolvedValue(mockDeal),
         save: jest.fn().mockImplementation((deal) => Promise.resolve(deal)),
       };
+      const mockAuditRepository = {
+        create: jest.fn().mockReturnValue({}),
+        save: jest.fn().mockResolvedValue({}),
+      };
       const mockDataSource = {
-        getRepository: jest.fn().mockReturnValue(mockRepository),
+        getRepository: jest.fn().mockImplementation((entity) => {
+          if (entity.name === 'Deal') return mockDealRepository;
+          if (entity.name === 'AuditLog') return mockAuditRepository;
+          return mockDealRepository;
+        }),
       };
       mockInitializeDataSource.mockResolvedValue(mockDataSource as any);
 
@@ -175,7 +209,7 @@ describe("/api/deals/[id]/sales-rep", () => {
 
       await PATCH(request, { params: { id: "1" } });
 
-      expect(mockRepository.save).toHaveBeenCalledWith(
+      expect(mockDealRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           sales_rep: "New Rep",
           updated_date: expect.any(String),
@@ -183,7 +217,7 @@ describe("/api/deals/[id]/sales-rep", () => {
       );
 
       // Check that updated_date is a recent ISO string
-      const savedDeal = mockRepository.save.mock.calls[0][0];
+      const savedDeal = mockDealRepository.save.mock.calls[0][0];
       const updatedDate = new Date(savedDeal.updated_date);
       const now = new Date();
       expect(updatedDate.getTime()).toBeCloseTo(now.getTime(), -3); // Within 1 second

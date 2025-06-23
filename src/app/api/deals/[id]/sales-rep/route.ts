@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { initializeDataSource } from "../../../../../data-source";
 import { Deal } from "../../../../../lib/entities/deals/Deal";
+import { AuditLog } from "../../../../../lib/entities/auditLog/AuditLog";
 import { z } from "zod";
 
 const SalesRepUpdateSchema = z.object({
   sales_rep: z.string().min(1, "Sales rep cannot be empty"),
+  reason: z.string().optional(),
+  changed_by: z.string().default("System User"),
 });
 
 export async function PATCH(
@@ -30,10 +33,11 @@ export async function PATCH(
       );
     }
 
-    const { sales_rep } = validationResult.data;
+    const { sales_rep, reason, changed_by } = validationResult.data;
 
     const dataSource = await initializeDataSource();
     const dealRepository = dataSource.getRepository(Deal);
+    const auditRepository = dataSource.getRepository(AuditLog);
 
     const deal = await dealRepository.findOne({ where: { id: dealId } });
     if (!deal) {
@@ -43,11 +47,28 @@ export async function PATCH(
       );
     }
 
+    // Store old value for audit trail
+    const oldSalesRep = deal.sales_rep;
+
     // Update sales rep
     deal.sales_rep = sales_rep;
     deal.updated_date = new Date().toISOString();
 
+    // Create audit log entry
+    const auditEntry = auditRepository.create({
+      dealId: deal.id,
+      dealIdentifier: deal.deal_id,
+      fieldChanged: 'sales_rep',
+      oldValue: oldSalesRep,
+      newValue: sales_rep,
+      changedBy: changed_by,
+      reason: reason || 'Sales rep reassignment',
+      changeType: 'manual',
+    });
+
+    // Save both deal and audit log
     await dealRepository.save(deal);
+    await auditRepository.save(auditEntry);
 
     return NextResponse.json({
       deal_id: deal.deal_id,
