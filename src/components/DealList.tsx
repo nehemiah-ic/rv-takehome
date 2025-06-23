@@ -166,6 +166,9 @@ const DealList: React.FC = () => {
         setPipelineData(data);
       }
 
+      // Trigger event for other components to refresh
+      window.dispatchEvent(new CustomEvent('dealUpdated', { detail: { dealId, salesRep } }));
+
       setEditingDeal(null);
     } catch (err) {
       console.error('Error updating sales rep:', err);

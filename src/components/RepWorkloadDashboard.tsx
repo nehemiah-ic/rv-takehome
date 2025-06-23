@@ -39,24 +39,37 @@ const RepWorkloadDashboard: React.FC = () => {
   const [workloadData, setWorkloadData] = useState<WorkloadData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const fetchWorkloadData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/workload-analytics");
+      if (!response.ok) {
+        throw new Error("Failed to fetch workload data");
+      }
+      const data = await response.json();
+      setWorkloadData(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchWorkloadData = async () => {
-      try {
-        const response = await fetch("/api/workload-analytics");
-        if (!response.ok) {
-          throw new Error("Failed to fetch workload data");
-        }
-        const data = await response.json();
-        setWorkloadData(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchWorkloadData();
+  }, [refreshKey]);
+
+  // Listen for deal changes to auto-refresh
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    window.addEventListener('dealUpdated', handleStorageChange);
+    return () => window.removeEventListener('dealUpdated', handleStorageChange);
   }, []);
 
   const formatCurrency = (value: number) => {
@@ -128,7 +141,9 @@ const RepWorkloadDashboard: React.FC = () => {
   return (
     <div className="w-full space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="mb-4">
+        <h3 className="text-md font-medium text-gray-700 mb-3">Team Summary</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h3 className="text-sm font-medium text-gray-600">Total Reps</h3>
           <p className="text-2xl font-bold text-gray-900">{summary.totalReps}</p>
@@ -148,6 +163,7 @@ const RepWorkloadDashboard: React.FC = () => {
           <h3 className="text-sm font-medium text-gray-600">Underutilized Reps</h3>
           <p className="text-2xl font-bold text-yellow-600">{summary.underutilizedReps}</p>
           <p className="text-xs text-gray-500">Have additional capacity</p>
+        </div>
         </div>
       </div>
 
@@ -182,10 +198,17 @@ const RepWorkloadDashboard: React.FC = () => {
 
       {/* Rep Workload Table */}
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-800">
-            Sales Rep Workload Analysis
+            Individual Rep Analysis
           </h3>
+          <button
+            onClick={() => setRefreshKey(prev => prev + 1)}
+            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            disabled={loading}
+          >
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
