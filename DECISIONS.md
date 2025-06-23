@@ -1,3 +1,38 @@
+# Final Polish & Drill-Down Features - What I Built & Why (PR #5)
+
+## The Gist
+
+Added comprehensive drill-down modals, deal count badges, stage filtering, compact table design, and extensive unit test coverage. Final polish session focused on user experience improvements and ensuring robust functionality across all components.
+
+## What I Built - Final 30 Minutes
+
+**Drill-Down Modal System:**
+- **Deal List Drill-Down**: Click any Deal ID to open detailed modal showing all deal data (Contact, Transportation Mode, Probability, Origin/Destination Cities, Expected Close, Cargo Type)
+- **Territory Drill-Down**: Click any territory name to open comprehensive territory analysis modal with deal distribution by stage, sales rep assignments, and performance insights
+- **Modal UX**: Large modals (max-w-4xl, 90vh) with click-outside-to-close, X button, and proper event propagation
+
+**Enhanced Deal List Experience:**
+- **Compact Table Design**: Reduced columns to essentials (Deal ID, Company, Stage, Value, Sales Rep, Territory) to eliminate horizontal scrolling
+- **Stage Filter**: Added stage dropdown filter alongside existing sales rep and territory filters
+- **Deal Count Badge**: Dynamic count in Dashboard card title showing actual number of deals
+- **Improved Reassignment**: Click-away to cancel, auto-focus dropdown, better UX flow
+
+**Territory Modal Deep Dive:**
+- **Overview Metrics**: 4-column grid showing Total Deals, Pipeline Value, Avg Probability, Sales Rep Count
+- **Deal Distribution by Stage**: Visual grid with deal counts and percentages per stage
+- **Sales Representatives**: Cards showing all reps assigned to territory (fixed API bug)
+- **Performance Insights**: Average Deal Value and Deals per Rep calculations
+
+**Comprehensive Unit Tests:**
+- **TerritoryDashboard.test.tsx**: 10 test cases covering modal functionality, data display, user interactions, error handling, and sorting
+- **DealList.test.tsx**: 12 test cases covering compact table, modal drill-down, filtering, sales rep reassignment, and edge cases
+- **Test Quality**: Proper fetch mocking, realistic data structures, async handling, comprehensive user interaction coverage
+
+**Technical Fixes:**
+- **API Enhancement**: Fixed territories API to properly load sales rep relationships with `relations: ['sales_rep']`
+- **Data Structure**: Updated territory analytics to extract `deal.sales_rep?.name` instead of full object
+- **Modal Architecture**: Consistent modal patterns across components with proper state management
+
 # Database Normalization & UI Polish - What I Built & Why (PR #4)
 
 ## The Gist
