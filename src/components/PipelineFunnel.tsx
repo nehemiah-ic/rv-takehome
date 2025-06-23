@@ -76,9 +76,9 @@ const PipelineFunnel: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold text-gray-800">
+    <div className="w-full space-y-3">
+      <div className="text-center mb-4">
+        <h3 className="text-sm font-semibold text-gray-800">
           Total Deals: {pipelineData.totalDeals}
         </h3>
       </div>
@@ -92,19 +92,19 @@ const PipelineFunnel: React.FC = () => {
 
           return (
             <div key={stage} className="relative">
-              <div className="flex items-center space-x-4">
-                <div className="w-24 text-sm font-medium text-gray-700 capitalize">
+              <div className="flex items-center space-x-2">
+                <div className="w-20 text-xs font-medium text-gray-700 capitalize">
                   {stage.replace("_", " ")}
                 </div>
-                <div className="flex-1 bg-gray-200 rounded-lg h-12 relative overflow-hidden">
+                <div className="flex-1 bg-gray-200 rounded h-8 relative overflow-hidden">
                   <div
                     className={`h-full ${
                       stageColors[stage as keyof typeof stageColors]
-                    } rounded-lg flex items-center justify-between px-4 text-white font-medium transition-all duration-300`}
+                    } rounded flex items-center justify-between px-2 text-white font-medium transition-all duration-300`}
                     style={{ width: `${widthPercentage}%` }}
                   >
-                    <span className="text-sm">{stageData.count} deals</span>
-                    <span className="text-sm">{stageData.percentage}%</span>
+                    <span className="text-xs">{stageData.count}</span>
+                    <span className="text-xs">{stageData.percentage}%</span>
                   </div>
                 </div>
               </div>

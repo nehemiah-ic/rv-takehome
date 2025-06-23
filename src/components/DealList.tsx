@@ -17,6 +17,7 @@ interface Deal {
   origin_city: string;
   destination_city: string;
   cargo_type?: string;
+  territory?: string;
 }
 
 interface PipelineData {
@@ -37,6 +38,8 @@ const DealList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>("created_date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [editingDeal, setEditingDeal] = useState<number | null>(null);
+  const [salesReps, setSalesReps] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchDeals = async () => {
@@ -54,7 +57,20 @@ const DealList: React.FC = () => {
       }
     };
 
+    const fetchSalesReps = async () => {
+      try {
+        const response = await fetch("/api/sales-reps");
+        if (response.ok) {
+          const data = await response.json();
+          setSalesReps(data.sales_reps);
+        }
+      } catch (err) {
+        console.error("Failed to fetch sales reps:", err);
+      }
+    };
+
     fetchDeals();
+    fetchSalesReps();
   }, []);
 
   // Flatten all deals from all stages
@@ -70,7 +86,7 @@ const DealList: React.FC = () => {
 
   // Filter and sort deals
   const filteredAndSortedDeals = useMemo(() => {
-    let filtered = allDeals.filter(
+    const filtered = allDeals.filter(
       (deal) =>
         deal.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         deal.contact_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -129,6 +145,34 @@ const DealList: React.FC = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const handleSalesRepUpdate = async (dealId: number, salesRep: string) => {
+    try {
+      const response = await fetch(`/api/deals/${dealId}/sales-rep`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sales_rep: salesRep }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update sales rep');
+      }
+
+      // Refresh the deals data
+      const dealsResponse = await fetch('/api/deals');
+      if (dealsResponse.ok) {
+        const data = await dealsResponse.json();
+        setPipelineData(data);
+      }
+
+      setEditingDeal(null);
+    } catch (err) {
+      console.error('Error updating sales rep:', err);
+      alert('Failed to update sales rep. Please try again.');
+    }
+  };
+
   const getStageColor = (stage: string) => {
     const colors = {
       prospect: "bg-blue-100 text-blue-800",
@@ -158,9 +202,9 @@ const DealList: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
       {/* Search Bar */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div className="relative flex-1 max-w-md">
           <input
             type="text"
@@ -191,8 +235,8 @@ const DealList: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full bg-white border border-gray-200 rounded-lg" style={{tableLayout: "auto"}}>
           <thead className="bg-gray-50">
             <tr>
               {[
@@ -204,6 +248,7 @@ const DealList: React.FC = () => {
                 { key: "value", label: "Value" },
                 { key: "probability", label: "Probability" },
                 { key: "sales_rep", label: "Sales Rep" },
+                { key: "territory", label: "Territory" },
                 { key: "expected_close_date", label: "Expected Close" },
               ].map(({ key, label }) => (
                 <th
@@ -254,7 +299,43 @@ const DealList: React.FC = () => {
                   {deal.probability}%
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {deal.sales_rep}
+                  {editingDeal === deal.id ? (
+                    <select
+                      defaultValue={deal.sales_rep}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleSalesRepUpdate(deal.id, e.target.value);
+                        }
+                      }}
+                      className="border border-gray-300 rounded px-2 py-1 text-sm"
+                    >
+                      <option value="">Select Sales Rep</option>
+                      {salesReps.map((rep) => (
+                        <option key={rep} value={rep}>
+                          {rep}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <span>{deal.sales_rep}</span>
+                      <button
+                        onClick={() => setEditingDeal(deal.id)}
+                        className="text-blue-600 hover:text-blue-800 text-xs"
+                      >
+                        Reassign
+                      </button>
+                    </div>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    deal.territory 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {deal.territory || 'Unassigned'}
+                  </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {formatDate(deal.expected_close_date)}
