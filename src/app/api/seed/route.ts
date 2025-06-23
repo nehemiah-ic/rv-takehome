@@ -25,14 +25,18 @@ function assignTerritory(originCity: string): string {
   }
   
   // South
-  if (city.includes('houston') || city.includes('dallas') || city.includes('austin') || 
-      city.includes('phoenix') || city.includes('denver')) {
+  if (city.includes('houston') || city.includes('dallas') || city.includes('austin')) {
     return 'South';
   }
   
   // Southwest
   if (city.includes('phoenix') || city.includes('las vegas') || city.includes('albuquerque')) {
     return 'Southwest';
+  }
+  
+  // Mountain West
+  if (city.includes('denver') || city.includes('salt lake') || city.includes('colorado springs')) {
+    return 'Mountain West';
   }
   
   // Default for unmatched cities
